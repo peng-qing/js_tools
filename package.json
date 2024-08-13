@@ -1,0 +1,10 @@
+{
+  "name": "tools",
+  "version": "1.0.0",
+  "main": "main.js",
+  "author": "pengqq",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "type": "module"
+}
