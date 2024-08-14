@@ -8,26 +8,26 @@ env_utils.ENV = {
     BROWSER: 2
 }
 
-env_utils.ENV_NAME = {
-    [env_utils.ENV.UNKNOWN]: "unknown",
-    [env_utils.ENV.NODE]: "node",
-    [env_utils.ENV.BROWSER]: "browser"
-}
+const ENV_NAMES = [
+    "unknown",
+    "node",
+    "browser"
+];
 
 env_utils.BROWSER_ENV = {
     UNKNOWN: 0,
     PC: 1,
-    PHONE: 2
+    MOBILE: 2
 }
 
-env_utils.BROWSER_ENV_NAME = {
-    [env_utils.BROWSER_ENV.UNKNOWN]: "unknown",
-    [env_utils.BROWSER_ENV.PC]: "pc",
-    [env_utils.BROWSER_ENV.PHONE]: "phone"
-}
+const BROWSER_ENV_NAMES = [
+    "unknown",
+    "pc",
+    "mobile"
+]
 
 env_utils.OS = {
-
+    UNKNOWN: 0,
 }
 
 env_utils.getEnv = function () {
@@ -46,9 +46,14 @@ env_utils.getEnv = function () {
 env_utils.getEnvName = function () {
     const env = env_utils.getEnv();
 
-    return env_utils.ENV_NAME[env];
+    return ENV_NAMES[env];
 }
 
 env_utils.getBrowserEnv = function () {
-    
+    const env = env_utils.getEnv();
+    if (env !== env_utils.ENV.BROWSER) {
+        return env_utils.BROWSER_ENV.UNKNOWN;
+    }
+
+    window.navigator.userAgent
 }
