@@ -33,6 +33,25 @@ random_utils.shuffleArray = function (arr) {
 }
 
 /**
+ * 计算总权重的加权随机 采用权重不均等情况的轮盘选择法
+ * @param {Map} weightMap 
+ * @returns {any | null}
+ */
+random_utils.simpleTotalWeightRandom = function (weightMap) {
+    if (!type_utils.isMap(weightMap)) {
+        throw Error("[random_utils] simpleTotalWeightRandom invalid parameter input");
+    }
+    // 求和
+    // const totalWeight = Array.from(weightMap.values()).
+    //     reduce((curVal, totalVal) => {
+    //         return curVal + totalVal;
+    //     }, 0);
+    // // 随机值
+    // for (const [key, weight] of weightMap) {
+    // }
+}
+
+/**
  * 不计算总权重的简单加权随机
  * 根据Efraimidis和Spirakis在2006年发表的Paper：Weighted random sampling with a reservoir
  * @param {Map} weightMap 
