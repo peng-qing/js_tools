@@ -54,6 +54,7 @@ random_utils.simpleTotalWeightRandom = function (weightMap) {
 /**
  * 不计算总权重的简单加权随机
  * 根据Efraimidis和Spirakis在2006年发表的Paper：Weighted random sampling with a reservoir
+ * 参考链接 https://lotabout.me/2018/Weighted-Random-Sampling/
  * @param {Map} weightMap 
  * @returns {any | null} 随机失败会返回 null
  */
@@ -70,6 +71,9 @@ random_utils.simpleWeightRandom = function (weightMap) {
         }
         // 计算每个key 对应的分数
         // score = rand ^ (1.0/weight) rand为[0.0, 1.0]的随机
+        // TODO: weight 为一般权重且比较大时 score 可能会比较小从而导致丢失精度
+        // 可以考虑对 取对数 log，这样 score 的计算就变成了 log(rand)/weight
+        // 因为后续是比较相对大小而非绝对值 所以结果上没有太大影响
         const score = Math.pow(Math.random(), 1.0 / weight);
         if (score > maxScore) {
             maxScore = score;
@@ -86,7 +90,7 @@ random_utils.simpleWeightRandom = function (weightMap) {
  * @param {Number} count 随机次数
  * @returns {Array} 随机结果
  */
-random_utils.getWeightRandom = function (weightMap, count) {
+random_utils.getWeightNonRepeatRandom = function (weightMap, count) {
     if (!type_utils.isMap(weightMap) || !type_utils.isNumber(count)) {
         throw Error("[random_utils] getWeightRandom invalid parameter input");
     }
