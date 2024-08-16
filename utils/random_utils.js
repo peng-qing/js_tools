@@ -41,14 +41,36 @@ random_utils.simpleTotalWeightRandom = function (weightMap) {
     if (!type_utils.isMap(weightMap)) {
         throw Error("[random_utils] simpleTotalWeightRandom invalid parameter input");
     }
+    if (weightMap.size <= 0) {
+        return null;
+    }
     // 求和
-    // const totalWeight = Array.from(weightMap.values()).
-    //     reduce((curVal, totalVal) => {
-    //         return curVal + totalVal;
-    //     }, 0);
-    // // 随机值
-    // for (const [key, weight] of weightMap) {
-    // }
+    const totalWeight = Array.from(weightMap.values()).
+        reduce((curVal, totalVal) => {
+            return curVal + totalVal;
+        }, 0);
+
+    if (totalWeight <= 0) {
+        return null;
+    }
+    // 随机值
+    let targetScore = random_utils.getRandom(0, totalWeight);
+    // js map 保持key的插入顺序 避免影响 打乱key的遍历顺序
+    const allKeys = Array.from(weightMap.keys());
+    random_utils.shuffleArray(allKeys);
+    let result = null;
+
+    for (const randomKey of allKeys) {
+        const keyWeight = weightMap.get(randomKey) || 0;
+        targetScore -= keyWeight;
+        if (targetScore <= 0) {
+            // 表示随机到了
+            result = randomKey;
+            break;
+        }
+    }
+
+    return result;
 }
 
 /**
