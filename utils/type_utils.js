@@ -1,5 +1,7 @@
 "use strict";
 
+import lodash from "lodash";
+
 export const type_utils = {};
 
 type_utils.isNumber = function (val) {
@@ -76,3 +78,11 @@ type_utils.isPromise = function (val) {
         typeof val.catch === "function"
 }
 
+/**
+ * 深度克隆对象
+ * @param {Object} obj
+ * @returns {Object} 
+ */
+type_utils.deepCloneObj = function (obj) {
+    lodash.cloneDeep(obj);
+}
