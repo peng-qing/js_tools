@@ -9,5 +9,8 @@
   "type": "module",
   "devDependencies": {
     "@types/node": "^22.3.0"
+  },
+  "dependencies": {
+    "dayjs": "^1.11.13"
   }
 }
