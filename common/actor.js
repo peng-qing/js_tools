@@ -1,8 +1,8 @@
 "use strict";
 
 import EventEmitter from "events";
-import { time_utils } from "../utils/time_utils.js";
 import { isMessage } from "./message.js";
+import { time_utils } from "../utils/time_utils.js";
 
 export class Actor extends EventEmitter {
 
@@ -56,6 +56,11 @@ export class Actor extends EventEmitter {
         return this.msgQueue.length;
     }
 
+    /**
+     * 添加消息
+     * @param {Message} msg 
+     * @returns {Boolean}
+     */
     addMessage(msg) {
         if (!isMessage(msg)) {
             throw new Error(`actor ${this.id} add invalid message`);
@@ -77,4 +82,18 @@ export class Actor extends EventEmitter {
         return true;
     }
 
+    /**
+     * 压出消息
+     * @returns {Message}
+     */
+    popMessage() {
+        if (this.getMsgQueueSize() <= 0) {
+            return null;
+        }
+        const msg = this.msgQueue[0];
+        this.lastPopMsgTime = time_utils.Now();
+        this.msgQueue.splice(0, 1);
+
+        return msg;
+    }
 }
