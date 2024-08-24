@@ -1,12 +1,19 @@
 "use strict";
 
 import EventEmitter from "events";
-import { isMessage } from "./message.js";
+import { isMessage, Message } from "./message.js";
 import { time_utils } from "../utils/time_utils.js";
+
+export const ActorState = {
+    New: 0,
+    Running: 1,
+    Close: 2
+};
 
 /**
  * Actor 基类
- * @event Actor#[overstock] 消息积压告警
+ * @event Actor#[overstock] 对外事件 消息积压告警
+ * @event Actor#[process] 内部事件 处理消息
  * @extends EventEmitter
  * @class Actor
  * @property {Number} id Actor 唯一ID 默认生成，不可修改
@@ -17,8 +24,10 @@ import { time_utils } from "../utils/time_utils.js";
  * @property {Number} warnInterval 告警时间间隔 默认3秒
  * @property {Number} lastWarnTime 最后一次告警时间
  * @property {Boolean} waitProcessing 消息处理锁
+ * @property {Number} waitProcessingExpired 锁过期时间
  * @property {Number} lastPopMsgTime 最后一次消息出栈时间
  * @property {Number} lastPushMsgTime 最后一次消息压栈时间
+ * @property {Boolean} closed 是否关闭
  */
 export class Actor extends EventEmitter {
 
@@ -47,8 +56,10 @@ export class Actor extends EventEmitter {
         this.lastWarnTime = 0;
         this.warnInterval = warnInterval;
         this.waitProcessing = false;
+        this.waitProcessingExpired = 0;
         this.lastPushMsgTime = 0;
         this.lastPopMsgTime = 0;
+        this.state = ActorState.New;
     }
 
     getId() {
@@ -91,6 +102,69 @@ export class Actor extends EventEmitter {
         return this.warnInterval;
     }
 
+    isClosed() {
+        return this.state === ActorState.Close;
+    }
+
+    isRunning() {
+        return this.state === ActorState.Running;
+    }
+
+    /**
+     * 直接清空队列
+     * @access private
+     */
+    __clearMsgQueue() {
+        this.msgQueue.splice(0, this.msgQueue.length);
+    }
+
+    /**
+     * 请求加锁 默认6秒
+     * @access private
+     */
+    __acquireWaitProcessing() {
+        const nowTime = time_utils.Now();
+        this.waitProcessing = true;
+        this.waitProcessingExpired = nowTime + 6;
+    }
+
+    /**
+     * 检查锁是否过期 
+     * @access private
+     */
+    __checkWaitProcessingExpired() {
+        if (!this.isRunning()) {
+            return false;
+        }
+        const nowTime = time_utils.Now();
+        return this.waitProcessingExpired < nowTime;
+    }
+
+    /**
+     * 释放锁
+     * @access private
+     */
+    __releaseWaitProcessing() {
+        this.waitProcessing = false;
+        this.waitProcessingExpired = 0;
+    }
+
+    // 开始监听
+    startListen() {
+        if (this.isClosed()) {
+            throw new Error(`Actor is closed, actorId:${this.getId()}, actorKind:${this.getKind()}`);
+        }
+        if (this.isRunning()) {
+            return;
+        }
+        this.state = ActorState.Running;
+        this.on("process", () => {
+            setImmediate(() => {
+                this.__executeMessage();
+            })
+        });
+    }
+
     /**
      * 添加消息
      * @param {Message} msg 
@@ -114,15 +188,17 @@ export class Actor extends EventEmitter {
             // 告警 
             this.emit("overstock", queueSize);
         }
-
+        // 
+        this.__tryProcessMessage();
         return true;
     }
 
     /**
-     * 压出消息
+     * 内部接口 压出消息
+     * @access private
      * @returns {Message}
      */
-    popMessage() {
+    __popMessage() {
         if (this.getMsgQueueSize() <= 0) {
             return null;
         }
@@ -131,5 +207,61 @@ export class Actor extends EventEmitter {
         this.msgQueue.splice(0, 1);
 
         return msg;
+    }
+
+    /**
+     * 内部接口 尝试执行消息
+     * @access private
+     */
+    __tryProcessMessage() {
+        const queueSize = this.getMsgQueueSize();
+        if (queueSize === 0) {
+            return;
+        }
+        this.emit("process");
+    }
+
+    /**
+     * 内部接口 消息处理
+     * @access private 
+     */
+    __executeMessage() {
+        // 是否正在执行
+        if (!this.isRunning()) {
+            throw new Error(`Actor not running, actorId:${this.getId()}, actorKind:${this.getKind()}`);
+        }
+        const nowTime = time_utils.Now();
+        // 有消息正在处理
+        if (this.isWaitProcessing()) {
+            // 检查锁过期
+            if (this.__checkWaitProcessingExpired()) {
+                // TODO 暂时先这么处理
+                // 释放锁 清空队列
+                this.__clearMsgQueue();
+                this.__releaseWaitProcessing();
+            }
+            return false;
+        }
+        const message = this.__popMessage();
+        if (!message) {
+            return false;
+        }
+        this.__acquireWaitProcessing();
+
+        (async () => {
+            try {
+                await message.process();
+            }
+            catch (err) {
+                //TODO 暂不处理
+                void err;
+            }
+            // 释放锁
+            this.waitProcessing = false;
+            // 执行后续的消息
+            this.__tryProcessMessage();
+        })()
+
+        return true;
     }
 }

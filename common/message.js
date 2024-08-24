@@ -9,6 +9,10 @@ export class Message {
         this.context = context;
         this.beginTime = time_utils.Now();
     }
+
+    process() {
+        this.callback(this.kind, this.context)
+    }
 }
 
 export const isMessage = function (msg) {
