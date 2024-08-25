@@ -48,7 +48,7 @@ export class Actor extends EventEmitter {
 
     constructor(kind, warnLen, maxLen, warnInterval = 3) {
         super();
-        thid.id = Actor._genID();
+        this.id = Actor._genID();
         this.kind = kind;
         this.msgQueue = [];
         this.maxLen = maxLen;
@@ -260,7 +260,7 @@ export class Actor extends EventEmitter {
             this.__releaseWaitProcessing();
             // 执行后续的消息
             this.__tryProcessMessage();
-        })()
+        })();
 
         return true;
     }
