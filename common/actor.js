@@ -257,7 +257,7 @@ export class Actor extends EventEmitter {
                 void err;
             }
             // 释放锁
-            this.waitProcessing = false;
+            this.__releaseWaitProcessing();
             // 执行后续的消息
             this.__tryProcessMessage();
         })()
