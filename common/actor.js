@@ -230,7 +230,6 @@ export class Actor extends EventEmitter {
         if (!this.isRunning()) {
             throw new Error(`Actor not running, actorId:${this.getId()}, actorKind:${this.getKind()}`);
         }
-        const nowTime = time_utils.Now();
         // 有消息正在处理
         if (this.isWaitProcessing()) {
             // 检查锁过期
