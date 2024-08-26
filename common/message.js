@@ -1,10 +1,12 @@
 "use strict";
 
 export class Message {
-    constructor() {
+    constructor(ctx = {}) {
+        this.context = ctx;
     }
 
-    process() {
+    process(ctx) {
+        void ctx;
         throw new Error("not implemets process...");
     }
 }
@@ -12,5 +14,5 @@ export class Message {
 export const isMessage = function (msg) {
     return msg &&
         typeof msg === "object" &&
-        typeof msg.process === "function"
+        typeof msg.process === "function";
 }

@@ -250,7 +250,8 @@ export class Actor extends EventEmitter {
 
         (async () => {
             try {
-                await message.process();
+                const ctx = message.context;
+                await message.process(ctx);
             }
             catch (err) {
                 //TODO 暂不处理
