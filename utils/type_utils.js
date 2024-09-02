@@ -64,7 +64,7 @@ type_utils.isMap = function (val) {
 }
 
 type_utils.isNaN = function (val) {
-    return Number.isNaN(val);
+    return typeof val === "number" && Number.isNaN(val);
 }
 
 type_utils.isSet = function (val) {
