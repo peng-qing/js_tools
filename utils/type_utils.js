@@ -30,9 +30,7 @@ type_utils.isArray = function (val) {
 }
 
 type_utils.isNull = function (val) {
-    return !val &&
-        typeof val !== "undefined" &&
-        val !== 0;
+    return val === null;
 }
 
 type_utils.isUndefined = function (val) {
