@@ -1,0 +1,74 @@
+"use strict";
+
+export const typeUtils = {};
+
+typeUtils.isNumber = function (val_) {
+    return typeof val_ === "number" && isFinite(val_);
+}
+
+typeUtils.isString = function (val_) {
+    return typeof val_ === "string" || val_ instanceof String;
+}
+
+typeUtils.isBoolean = function (val_) {
+    return typeof val_ === "boolean";
+}
+
+typeUtils.isFunction = function (val_) {
+    return typeof val_ === "function";
+}
+
+typeUtils.isAsyncFunction = function (val_) {
+    return Object.prototype.toString.call(val_) === "[object AsyncFunction]";
+}
+
+typeUtils.isObject = function (val_) {
+    return val_ && typeof val_ === "object" && !Array.isArray(val_);
+}
+
+typeUtils.isArray = function (val_) {
+    return Array.isArray(val_);
+}
+
+typeUtils.isNull = function (val_) {
+    return val_ === null;
+}
+
+typeUtils.isUndefined = function (val_) {
+    return typeof val_ === "undefined";
+}
+
+typeUtils.isBigInt = function (val_) {
+    return typeof val_ === "bigint";
+}
+
+typeUtils.isDate = function (val_) {
+    return val_ instanceof Date;
+}
+
+typeUtils.isRegExp = function (val_) {
+    return val_ instanceof RegExp;
+}
+
+typeUtils.isError = function (val_) {
+    return val_ instanceof Error;
+}
+
+typeUtils.isMap = function (val_) {
+    return val_ instanceof Map;
+}
+
+typeUtils.isSet = function (val_) {
+    return val_ instanceof Set;
+}
+
+typeUtils.isNaN = function (val_) {
+    return typeof val_ === "number" && Number.isNaN(val_);
+}
+
+typeUtils.isPromise = function (val_) {
+    return val_ &&
+        typeof val_ === "object" &&
+        typeof val_.then === "function" &&
+        typeof val_.catch === "function"
+}
