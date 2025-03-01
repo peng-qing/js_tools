@@ -19,3 +19,21 @@ export function singleton(targetClass_) {
         }
     });
 }
+
+/**
+ * 通过静态成员变量实现单例
+ * 子类需要继承该类
+ */
+export class Singleton {
+    static _instance = null;
+    
+    /**
+     * @returns
+     */
+    static getInstance(){
+        if(!this._instance){
+            this._instance = new this();
+        }
+        return this._instance;
+    }
+}
