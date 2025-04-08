@@ -28,11 +28,19 @@ export class Singleton {
     static _instance = null;
     
     /**
-     * @returns
+     * 获取单例对象
+     * @description
+     *      这里最终需要传参通过子类构造函数实现单例
+     *      为什么不用 new this();
+     *      通过 new this() 产生的结果会依赖于其和父类的引入顺序
+     *      如果父类先引入，那么子类的 this 指向父类
+     *      如果子类先引入，那么子类的 this 指向子类
+     * @param {Object} T
+     * @returns {T}
      */
-    static getInstance(){
+    static getInstance(T){
         if(!this._instance){
-            this._instance = new this();
+            this._instance = new T();
         }
         return this._instance;
     }
