@@ -23,7 +23,7 @@ typeUtils.isAsyncFunction = function (val_) {
 }
 
 typeUtils.isObject = function (val_) {
-    return val_ && typeof val_ === "object" && !Array.isArray(val_);
+    return val_ && typeof val_ === "object";
 }
 
 typeUtils.isArray = function (val_) {
@@ -71,4 +71,39 @@ typeUtils.isPromise = function (val_) {
         typeof val_ === "object" &&
         typeof val_.then === "function" &&
         typeof val_.catch === "function"
+}
+
+// 只适用自定义类型
+typeUtils.isClass = function (val_) {
+    return val_ &&
+        typeof val_ === "function" &&
+        /^class\s/.test(Function.prototype.toString.call(val_));
+}
+
+// 只适用自定义类型
+typeUtils.isClassInstance = function (val_) {
+    return val_ &&
+        typeof val_ === "object" &&
+        val_.constructor &&
+        typeof val_.constructor === "function" &&
+        /^class\s/.test(Function.prototype.toString.call(val_.constructor));
+}
+
+// 判断原型链是否到顶端 非标准
+typeUtils.isTopPrototype = function (val_) {
+    return !val_ || (
+        typeof val_ === "object" &&
+        typeof val_.hasOwnProperty === "function" &&
+        val_.hasOwnProperty("isPrototypeOf") &&
+        val_.hasOwnProperty("propertyIsEnumerable") &&
+        val_.hasOwnProperty("isPrototypeOf") &&
+        val_.hasOwnProperty("toLocaleString") &&
+        val_.hasOwnProperty("toString") &&
+        val_.hasOwnProperty("valueOf")
+    )
+}
+
+// 是否在严格模式
+typeUtils.isStrictMode = function () {
+    return (function () { return this === undefined })();
 }
