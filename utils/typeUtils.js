@@ -6,6 +6,10 @@ typeUtils.isNumber = function (val_) {
     return typeof val_ === "number" && isFinite(val_);
 }
 
+typeUtils.isInteger = function (val_) {
+    return Number.isInteger(val_);
+}
+
 typeUtils.isString = function (val_) {
     return typeof val_ === "string" || val_ instanceof String;
 }
@@ -66,7 +70,7 @@ typeUtils.isNaN = function (val_) {
     return typeof val_ === "number" && Number.isNaN(val_);
 }
 
-typeUtils.isPromise = function (val_) {
+typeUtils.isPromiseLike = function (val_) {
     return val_ &&
         typeof val_ === "object" &&
         typeof val_.then === "function" &&
