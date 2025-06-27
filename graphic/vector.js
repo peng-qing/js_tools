@@ -2,18 +2,22 @@
 
 import { typeUtils } from "../utils/typeUtils.js";
 
-// 向量类
+/**
+ * 向量类
+ * @class Vector
+ * @description 向量是一个有方向和大小的量
+ */
 class Vector {
     /**
      * 构造函数，接受任意数量的维度参数
-     * @param  {...any} dimensions_ 
+     * @param  {...Number|String} dimensions_ 
      * @throws {Error} 如果维度值不是数字
      */
     constructor(...dimensions_) {
-        if (dimensions_.some(d => !typeUtils.isNumber(d))) {
+        if (dimensions_.some(d => !typeUtils.isNumber(d) || !typeUtils.isNumber(Number(d)))) {
             throw new Error("All vector dimensions must be numbers.");
         }
-        this.dimensions = dimensions_;
+        this.dimensions = dimensions_.map(val => Number(val));
     }
 
     /**
@@ -35,11 +39,12 @@ class Vector {
 
     /**
      * 获取向量的指定维度的值
-     * @param {Number} index_ 维度的索引 从0开始
+     * @param {Number|String} index_ 维度的索引 从0开始
      * @returns {Number} 维度的值
      * @throws {Error} 如果索引无效
      */
     get(index_) {
+        index_ = Number(index_);
         if (!typeUtils.isInteger(index_) || index_ < 0 || index_ >= this.dimension) {
             throw new Error("Invalid index");
         }
@@ -48,12 +53,13 @@ class Vector {
 
     /**
      * 设置向量的指定维度的值
-     * @param {Number} index_ 维度的索引
-     * @param {Number} value_ 要设置的值
+     * @param {Number|String} index_ 维度的索引
+     * @param {Number|String} value_ 要设置的值
      * @returns {Vector} 当前向量
      * @throws {Error} 如果索引无效或值不是数字
      */
     set(index_, value_) {
+        index_ = Number(index_), value_ = Number(value_);
         if (!typeUtils.isInteger(index_) || index_ < 0 || index_ >= this.dimension) {
             throw new Error("Invalid index");
         }
@@ -159,11 +165,12 @@ class Vector {
 
     /**
      * 标量乘法 修改当前向量
-     * @param {Number} scalar_ 标量
+     * @param {Number|String} scalar_ 标量
      * @returns {Vector} 相乘后的向量
      * @throws {Error} 如果输入不是标量
      */
     multiplyScalar(scalar_) {
+        scalar_ = Number(scalar_);
         if (!typeUtils.isNumber(scalar_)) {
             throw new Error("Input must be a scalar");
         }
@@ -177,11 +184,12 @@ class Vector {
     /**
      * 标量乘法 返回新的向量
      * @param {Vector} vec_ 
-     * @param {Number} scalar_ 
+     * @param {Number|String} scalar_ 
      * @returns {Vector} 新的向量
      * @throws {Error} 如果输入不是向量和标量
      */
     static multiplyScalar(vec_, scalar_) {
+        scalar_ = Number(scalar_);
         if (!(vec_ instanceof Vector)) {
             throw new Error("Input must be a Vector");
         }
@@ -252,10 +260,14 @@ class Vector {
 
     /**
      * 创建一个指定维度的零向量
-     * @param {Number} dimension_ 向量的维度
+     * @param {Number | String} dimension_ 向量的维度
      * @returns {Vector} 零向量
      */
     static zero(dimension_) {
+        dimension_ = Number(dimension_);
+        if (!typeUtils.isNumber(dimension_)) {
+            throw new Error("Input dimension must be a Number or String");
+        }
         return new Vector(...Array(dimension_).fill(0));
     }
 
@@ -266,6 +278,9 @@ class Vector {
      * @throws {Error} 如果输入不是数组或数组元素不是数字
      */
     static fromArray(arr_) {
+        if (!typeUtils.isArray(arr_)) {
+            throw new Error("Input must be a Array");
+        }
         return new Vector(...arr_);
     }
 
