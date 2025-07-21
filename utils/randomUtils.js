@@ -1,8 +1,8 @@
 "use strict";
 
-import { typeUtils } from "./typeUtils.js";
+const typeUtils = require("./typeUtils.js");
 
-export const randomUtils = {};
+const randomUtils = {};
 
 /**
  * 获取随机数 左闭右闭 [min_, max_]
@@ -162,3 +162,5 @@ randomUtils.getWeightNonRepeatRandom = function (weightMap_, count_) {
 
     return result;
 }
+
+module.exports = randomUtils;

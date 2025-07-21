@@ -1,6 +1,6 @@
 "use strict";
 
-import { typeUtils } from "../utils/typeUtils.js";
+const typeUtils = require("../utils/typeUtils.js");
 
 /**
  * 矩阵
@@ -286,4 +286,4 @@ class Matrix {
     // TODO: 矩阵转置 行列式 逆矩阵....
 }
 
-export { Matrix }
+module.exports = Matrix;

@@ -1,14 +1,14 @@
 "use strict";
 
-export const envUtils = {};
+const envUtils = {};
 
-export const ENV = {
+const ENV = {
     UNKNOWN: "unknown",
     NODE: "node",
     BROWSER: "browser",
 }
 
-export const OS = {
+const OS = {
     UNKNOWN: "unknown",
     LINUX: "linux",
     WINDOWS: "windows",
@@ -89,4 +89,10 @@ envUtils.isMobile = () => {
     const Agents = ['Android', 'iPhone', 'SymbianOS', 'Windows Phone', 'iPad', 'iPod'];
 
     return Agents.some(agent => userAgents.indexOf(agent) > -1);
+}
+
+module.exports = {
+    envUtils,
+    ENV,
+    OS,
 }

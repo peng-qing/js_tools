@@ -1,6 +1,6 @@
 "use strict";
 
-export const timeUtils = {};
+const timeUtils = {};
 
 /**
  * 获取时间戳 秒
@@ -40,3 +40,4 @@ timeUtils.isSameDayByFive = (time1, time2) => {
     return timeUtils.isSameDayByZero(time1 - 60 * 60 * 5, time2 - 60 * 60 * 5);
 }
 
+module.exports = timeUtils;

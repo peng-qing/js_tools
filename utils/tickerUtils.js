@@ -1,6 +1,6 @@
 "use strict";
 
-export const tickerUtils = {};
+const tickerUtils = {};
 
 /**
  * setTimeout 封装 支持长延迟
@@ -71,3 +71,5 @@ tickerUtils.sleepEx = async (waitMs_) => {
         });
     }
 }
+
+module.exports = tickerUtils;

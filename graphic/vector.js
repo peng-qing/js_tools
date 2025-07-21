@@ -1,6 +1,6 @@
 "use strict";
 
-import { typeUtils } from "../utils/typeUtils.js";
+const typeUtils = require("../utils/typeUtils.js");
 
 /**
  * 向量类
@@ -343,4 +343,4 @@ class Vector {
     }
 }
 
-export { Vector };
+module.exports = Vector;

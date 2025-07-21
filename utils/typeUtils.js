@@ -1,6 +1,8 @@
 "use strict";
 
-export const typeUtils = {};
+const crypto = require("crypto");
+
+const typeUtils = {};
 
 typeUtils.isNumber = function (val_) {
     return typeof val_ === "number" && isFinite(val_);
@@ -111,3 +113,23 @@ typeUtils.isTopPrototype = function (val_) {
 typeUtils.isStrictMode = function () {
     return (function () { return this === undefined })();
 }
+
+/**
+ * 转换为数字 任意输入 使用hash方式 
+ * @param {any} val_ 
+ * @returns {Number}
+ */
+typeUtils.toNumber = function (val_) {
+    if (typeUtils.isNumber(val_)) {
+        return val_;
+    }
+    if (!typeUtils.isString(val_)) {
+        val_ = JSON.stringify(val_);
+    }
+    const hashStr = crypto.createHash("sha256").update(val_).digest();
+    // 取前4字节 为一个 uint32
+    const num = hashStr.readUint32BE(0);
+    return Math.floor(num);
+}
+
+module.exports = typeUtils;

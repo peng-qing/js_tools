@@ -7,9 +7,8 @@
  * @param {Object} targetClass_ 
  * @returns 
  */
-export function singleton(targetClass_) {
+function singleton(targetClass_) {
     let instance = null;
-
     return new Proxy(targetClass_, {
         construct(targetClass_, args) {
             if (!instance) {
@@ -24,9 +23,9 @@ export function singleton(targetClass_) {
  * 通过静态成员变量实现单例
  * 子类需要继承该类
  */
-export class Singleton {
+class Singleton {
     static _instance = null;
-    
+
     /**
      * 获取单例对象
      * @description
@@ -38,10 +37,15 @@ export class Singleton {
      * @param {Object} T
      * @returns {T}
      */
-    static getInstance(T){
-        if(!this._instance){
+    static getInstance(T) {
+        if (!this._instance) {
             this._instance = new T();
         }
         return this._instance;
     }
+}
+
+module.exports = {
+    singleton,
+    Singleton,
 }

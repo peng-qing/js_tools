@@ -2,7 +2,7 @@
 
 const fs = require("fs");
 const path = require("path");
-const { typeUtils } = require("../utils/typeUtils.js");
+const typeUtils = require("../utils/typeUtils.js");
 
 class HotReloaderCommonJS {
     // 跳过一些内置属性
