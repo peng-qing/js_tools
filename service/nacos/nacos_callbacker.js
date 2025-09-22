@@ -3,15 +3,30 @@
 class NacosCallbacker {
     constructor() { }
 
-    async onRegister() {
+    /**
+     * 服务实例注册回调
+     * @param {import("nacos").Host[]} instances 
+     */
+    async onRegister(instances) {
+        void instances;
         console.log('NacosCallbacker onRegister');
     }
 
-    async onDeregister() {
+    /**
+     * 服务实例注销回调
+     * @param {import("nacos").Host[]} instances 
+     */
+    async onDeregister(instances) {
+        void instances;
         console.log('NacosCallbacker onDeregister');
     }
 
-    async onServiceChange() {
+    /**
+     * 服务实例变更回调
+     * @param {import("nacos").Host[]} instances 
+     */
+    async onServiceChange(instances) {
+        void instances;
         console.log('NacosCallbacker onServiceChange');
     }
 

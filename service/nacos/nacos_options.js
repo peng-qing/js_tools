@@ -339,10 +339,83 @@ class NacosNamingWatcherOptionsBuilder extends NacosOptionsBuilder {
     }
 }
 
+/**
+ * Nacos 配置服务监听选项构建器
+ */
+class NacosConfigWatcherOptionsBuilder extends NacosOptionsBuilder {
+    constructor() {
+        this._options = {};
+    }
+    /**
+     * 配置ID
+     * @param {string} dataId_ 
+     * @returns {NacosConfigWatcherOptionsBuilder}
+     */
+    dataId(dataId_) {
+        this._options.dataId = dataId_;
+        return this;
+    }
+
+    /**
+     * 分组名
+     * @param {string} groupName_ 
+     * @returns {NacosConfigWatcherOptionsBuilder}
+     */
+    groupName(groupName_) {
+        this._options.groupName = groupName_;
+        return this;
+    }
+
+    /**
+     * 单元
+     * @param {string} unit_ 
+     * @returns {NacosConfigWatcherOptionsBuilder}
+     */
+    unit(unit_) {
+        this._options.unit = unit_;
+        return this;
+    }
+}
+
+/**
+ * Nacos配置选项构建工厂
+ */
+class NacosOptionsFactory {
+    /**
+     * @returns {NacosNamingOptionsBuilder}
+     */
+    static namingBuilder() {
+        return new NacosNamingOptionsBuilder();
+    }
+
+    /**
+     * @returns {NacosConfigOptionsBuilder}
+     */
+    static configBuilder() {
+        return new NacosConfigOptionsBuilder();
+    }
+
+    /**
+     * @returns {NacosNamingWatcherOptionsBuilder}
+     */
+    static namingWatcherBuilder() {
+        return new NacosNamingWatcherOptionsBuilder();
+    }
+
+    /**
+     * @returns {NacosConfigWatcherOptionsBuilder}
+     */
+    static configWatcherBuilder() {
+        return new NacosConfigWatcherOptionsBuilder();
+    }
+}
+
 module.exports = {
     NacosOptionsBuilder,
     NacosNamingOptionsBuilder,
     NacosConfigOptionsBuilder,
-    NacosNamingWatcherOptionsBuilder
+    NacosNamingWatcherOptionsBuilder,
+    NacosConfigWatcherOptionsBuilder,
+    NacosOptionsFactory,
 }
 
