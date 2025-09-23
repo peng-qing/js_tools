@@ -38,6 +38,11 @@ class NacosNamingOptionsBuilder extends NacosOptionsBuilder {
         super();
     }
 
+    logger(logger_) {
+        this._options.logger = logger_;
+        return this;
+    }
+
     /**
      * Nacos 服务器列表 直连模式寻址 互斥于 endpoint
      * 如果是 string 支持使用 ',' 分割多个服务器地址

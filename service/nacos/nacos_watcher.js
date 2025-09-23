@@ -51,6 +51,21 @@ class NacosNamingWatcher extends NacosWatcher {
     }
 
     /**
+     * 关闭监听器
+     */
+    close() {
+        this._done = true;
+    }
+
+    /**
+     * 监听器配置
+     * @returns {Object}
+     */
+    getOptions() {
+        return this._options;
+    }
+
+    /**
      * 默认实例相等判断
      * @param {import("nacos").Host} instanceA 
      * @param {import("nacos").Host} instanceB 
