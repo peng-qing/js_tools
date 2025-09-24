@@ -234,6 +234,11 @@ class NacosConfigService {
         this._logger?.info(`[NacosConfigService] subscribe success, options: ${JSON.stringify(options)}`);
     }
 
+    /**
+     * 取消订阅
+     * @param {object} options_ 
+     * @returns 
+     */
     unSubscribe(options_) {
         if (!options_) {
             this._logger.warn(`[NacosConfigService] unSubscribe params invalid`);

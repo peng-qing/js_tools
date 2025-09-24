@@ -1,5 +1,7 @@
 "use strict";
 
+const NacosConst = require("./nacos_const.js");
+
 /**
  * Nacos 服务选项构建器
  * 用于构建Nacos服务的连接配置和扩展配置
@@ -15,10 +17,17 @@ class NacosOptionsBuilder {
      * @returns {Object}
      */
     build() {
+        this.defaults();
         this.validateRequiredFields(this._validateFields);
         return {
             ...this._options
         }
+    }
+
+    /**
+     * 对必要参数填入默认值
+     */
+    defaults() {
     }
 
     /**
@@ -360,6 +369,15 @@ class NacosNamingWatcherOptionsBuilder extends NacosOptionsBuilder {
         this._options.clusterName = clusterName_;
         return this;
     }
+
+    /**
+     * 设置默认值
+     * @override
+     */
+    defaults() {
+        if (!this._options.groupName) this._options.groupName = NacosConst.DEFAULT_GROUP
+        if (!this._options.clusterName) this._options.clusterName = NacosConst.DEFAULT_CLUSTER_NAME
+    }
 }
 
 /**
@@ -368,7 +386,7 @@ class NacosNamingWatcherOptionsBuilder extends NacosOptionsBuilder {
 class NacosConfigWatcherOptionsBuilder extends NacosOptionsBuilder {
     constructor() {
         this._options = {};
-        this._validateFields = ["dataId", "groupName"];
+        this._validateFields = ["dataId"];
     }
     /**
      * 配置ID
@@ -398,6 +416,14 @@ class NacosConfigWatcherOptionsBuilder extends NacosOptionsBuilder {
     unit(unit_) {
         this._options.unit = unit_;
         return this;
+    }
+
+    /**
+     * 设置默认值
+     * @override
+     */
+    defaults() {
+        if (!this._options.groupName) this._options.groupName = NacosConst.DEFAULT_GROUP
     }
 }
 
