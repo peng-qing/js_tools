@@ -7,12 +7,15 @@
 class NacosOptionsBuilder {
     constructor() {
         this._options = {};
+        this._validateFields = [];
     }
 
     /**
      * 构建最终配置选项
+     * @returns {Object}
      */
     build() {
+        this.validateRequiredFields(this._validateFields);
         return {
             ...this._options
         }
@@ -28,6 +31,18 @@ class NacosOptionsBuilder {
         }
         return this;
     }
+
+    /**
+     * 验证必需字段
+     * @param {Array<string>} fields 
+     */
+    validateRequiredFields(fields) {
+        for (const field of fields) {
+            if (this._data[field] === undefined) {
+                throw new Error(`Required field '${field}' is missing`);
+            }
+        }
+    }
 }
 
 /**
@@ -36,6 +51,7 @@ class NacosOptionsBuilder {
 class NacosNamingOptionsBuilder extends NacosOptionsBuilder {
     constructor() {
         super();
+        this._validateFields = ["namespace"];
     }
 
     logger(logger_) {
@@ -141,6 +157,7 @@ class NacosNamingOptionsBuilder extends NacosOptionsBuilder {
 class NacosConfigOptionsBuilder extends NacosOptionsBuilder {
     constructor() {
         super();
+        this._validateFields = ["namespace"];
     }
 
     /**
@@ -311,6 +328,7 @@ class NacosConfigOptionsBuilder extends NacosOptionsBuilder {
 class NacosNamingWatcherOptionsBuilder extends NacosOptionsBuilder {
     constructor() {
         super();
+        this._validateFields = ["serviceName"];
     }
 
     /**
@@ -350,6 +368,7 @@ class NacosNamingWatcherOptionsBuilder extends NacosOptionsBuilder {
 class NacosConfigWatcherOptionsBuilder extends NacosOptionsBuilder {
     constructor() {
         this._options = {};
+        this._validateFields = ["dataId", "groupName"];
     }
     /**
      * 配置ID

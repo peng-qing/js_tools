@@ -34,7 +34,9 @@ class NacosCallbacker {
         console.log('NacosCallbacker onHeartbeat');
     }
 
-    async onConfigChange() {
+    async onConfigChange(dataId_, dataObj_) {
+        void dataId_;
+        void dataObj_;
         console.log('NacosCallbacker onConfigChange');
     }
 }

@@ -8,6 +8,9 @@ const NacosConst = require("./nacos_const.js");
 class NacosInstanceRegisteryBuilder {
     constructor() {
         this._data = {};
+        this._validateFields = [
+            "ip", "port", "serviceName"
+        ];
     }
     /**
     * 实例 ID
@@ -168,9 +171,7 @@ class NacosInstanceRegisteryBuilder {
         // 设置默认选项
         this.defaults();
         // 必要的字段
-        this.validateRequiredFields([
-            "ip", "port", "serviceName"
-        ]);
+        this.validateRequiredFields(this._validateFields);
         if (!this._data.metadata) {
             this._data.metadata = {};
         }
@@ -198,6 +199,10 @@ class NacosInstanceRegisteryBuilder {
 class NacosInstanceDiscoveryBuilder extends NacosInstanceRegisteryBuilder {
     constructor() {
         super();
+        this._validateFields = [
+            "instanceId", "ip", "port", "healthy", "enabled", "weight",
+            "ephemeral", "serviceName", "clusterName",
+        ];
     }
 
     /**
@@ -243,10 +248,7 @@ class NacosInstanceDiscoveryBuilder extends NacosInstanceRegisteryBuilder {
      */
     build() {
         // 必要的字段
-        this.validateRequiredFields([
-            "instanceId", "ip", "port", "healthy", "enabled", "weight",
-            "ephemeral", "serviceName", "clusterName",
-        ]);
+        this.validateRequiredFields(this._validateFields);
         if (!this._data.metadata) {
             this._data.metadata = {};
         }

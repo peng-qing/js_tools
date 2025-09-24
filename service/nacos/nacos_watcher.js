@@ -129,14 +129,65 @@ class NacosNamingWatcher extends NacosWatcher {
         // 更新缓存
         this._instanceMap = newInstancesMap;
         // 分发通知给回调
-        if (addInstances.length > 0) {
-            this._fnCaller.onRegister(addInstances);
+        if (addInstances.length > 0 && typeof this._fnCaller?.onRegister == "function") {
+            this._fnCaller?.onRegister(addInstances);
         }
-        if (delInstances.length > 0) {
-            this._fnCaller.onDeregister(delInstances);
+        if (delInstances.length > 0 && typeof this._fnCaller?.onDeregister == "function") {
+            this._fnCaller?.onDeregister(delInstances);
         }
-        if (updateInstances.length > 0) {
-            this._fnCaller.onServiceChange(updateInstances);
+        if (updateInstances.length > 0 && typeof this._fnCaller?.onServiceChange == "function") {
+            this._fnCaller?.onServiceChange(updateInstances);
+        }
+    }
+}
+
+/**
+ * 配置监听器
+ */
+class NacosConfigWatcher extends NacosWatcher {
+    constructor(name_, fnCaller_, options_, parser_) {
+        super(name_);
+        /**
+         * 回调执行器
+         * @type {NacosCallbacker}
+         */
+        this._fnCaller = fnCaller_;
+        /**
+         * 监听器选项
+         * @type {Object}
+         */
+        this._options = options_;
+        /**
+         * 解析器选项
+         * @type {NacosConfigParser}
+         */
+        this._parser = parser_;
+    }
+
+    /**
+     * 获取监听参数选项
+     * @returns 
+     */
+    getOptions() {
+        return this._options;
+    }
+
+    /**
+     * 监听回调
+     * @override
+     * @param {string} content 配置内容
+     */
+    watchRouter(content) {
+        if (!this._parser) {
+            throw new Error("NacosConfigWatcher parser is not set");
+        }
+        // 解析覆写配置数据
+        const dataObj = this._parser.decode(content);
+        // 调用外部监听回调
+        if (this._fnCaller && typeof this._fnCaller?.onConfigChange === "function") {
+            // 将更新后的配置数据对象传递给外部监听回调函数
+            const dataId = this._options.dataId;
+            this._fnCaller.onConfigChange(dataId, dataObj);
         }
     }
 }
@@ -144,4 +195,5 @@ class NacosNamingWatcher extends NacosWatcher {
 module.exports = {
     NacosWatcher,
     NacosNamingWatcher,
+    NacosConfigWatcher,
 }
