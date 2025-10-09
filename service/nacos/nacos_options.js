@@ -428,9 +428,99 @@ class NacosConfigWatcherOptionsBuilder extends NacosOptionsBuilder {
 }
 
 /**
+ * Nacos 服务代理节点相关配置
+ */
+class NacosAgentOptionsBuilder extends NacosOptionsBuilder {
+    constructor() {
+        this._options = {};
+        this._validateFields = ["namespace", "endpoint", "username", "password", "serviceIp", "servicePort", "weight"];
+    }
+
+    /**
+     * nacos 命名空间
+     * @param {string} namespace_ 
+     * @returns {NacosAgentOptionsBuilder}
+     */
+    namespace(namespace_) {
+        this._options.namespace = namespace_;
+        return this;
+    }
+
+    /**
+     * 寻址模式nacos服务器端点
+     * @param {string} endpoint_ 
+     * @returns 
+     */
+    endpoint(endpoint_) {
+        this._options.endpoint = endpoint_;
+        return this;
+    }
+
+    /**
+     * 服务的地址
+     * @param {string} serviceIp_ 
+     * @param {number} servicePort_ 
+     */
+    serviceAddress(serviceIp_, servicePort_) {
+        this._options.serviceIp = serviceIp_;
+        this._options.servicePort = servicePort_;
+        return this;
+    }
+
+    /**
+     * nacos 验证信息
+     * @param {string} username_ 
+     * @param {string} password_ 
+     */
+    auth(username_, password_) {
+        this._options.username = username_;
+        this._options.password = password_;
+        return this;
+    }
+
+    /**
+     * Nacos 注册的服务名
+     * @param {string} serviceName_ 
+     * @returns 
+     */
+    serviceName(serviceName_) {
+        this._options.serviceName = serviceName_;
+        return this;
+    }
+
+    /**
+     * Nacos 注册到的集群名
+     * @param {string} clusterName_ 
+     * @returns 
+     */
+    clusterName(clusterName_) {
+        this._options.clusterName = clusterName_;
+        return this;
+    }
+
+    /**
+     * Nacos 命名服务监听选项组名称
+     * @param {string} groupName_ 
+     * @returns 
+     */
+    groupName(groupName_) {
+        this._options.groupName = groupName_;
+        return this;
+    }
+}
+
+/**
  * Nacos配置选项构建工厂
  */
 class NacosOptionsFactory {
+
+    /**
+     * @returns {NacosAgentOptionsBuilder}
+     */
+    static agentBuilder() {
+        return new NacosAgentOptionsBuilder();
+    }
+
     /**
      * @returns {NacosNamingOptionsBuilder}
      */
@@ -466,6 +556,7 @@ module.exports = {
     NacosConfigOptionsBuilder,
     NacosNamingWatcherOptionsBuilder,
     NacosConfigWatcherOptionsBuilder,
+    NacosAgentOptionsBuilder,
     NacosOptionsFactory,
 }
 
