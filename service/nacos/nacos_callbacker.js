@@ -40,3 +40,5 @@ class NacosCallbacker {
         console.log('NacosCallbacker onConfigChange');
     }
 }
+
+module.exports = NacosCallbacker;

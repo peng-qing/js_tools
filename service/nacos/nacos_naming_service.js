@@ -148,6 +148,7 @@ class NacosNamingService {
                 return false;
             }
             this._logger.info(`[NacosNamingService] register service, instance: ${JSON.stringify(instance)}, groupName_: ${groupName_}`);
+            // weight、metadata 等数据可以不需要
             await this.getNamingClient().registerInstance(instance.serviceName, instance, groupName_);
         }
         catch (err) {
