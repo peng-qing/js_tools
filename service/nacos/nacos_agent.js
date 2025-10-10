@@ -184,11 +184,11 @@ class NacosAgent {
      * 节点代理服务注销
      */
     async agentDeregister() {
-        const registeryInfo = this._buildRegisteryInfo();
-        await this._namingService.deregisterInstance(registeryInfo, this._agentOptions?.groupName);
         // 心跳停止
         this.stopAgentHeartbeat();
         // 注销命名服务
+        const registeryInfo = this._buildRegisteryInfo();
+        await this._namingService.deregisterInstance(registeryInfo, this._agentOptions?.groupName);
         await this._namingService.destroy();
         this._namingService = null;
         // 注销配置服务
