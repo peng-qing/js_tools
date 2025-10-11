@@ -28,6 +28,7 @@ class NacosOptionsBuilder {
      * 对必要参数填入默认值
      */
     defaults() {
+        return this;
     }
 
     /**
@@ -286,7 +287,8 @@ class NacosConfigOptionsBuilder extends NacosOptionsBuilder {
         if (this._options.endpointQueryParams) {
             this._options.endpointQueryParams += `&`
         }
-        this._options.endpointQueryParams += `${key_}=${value_}`
+        this._options.endpointQueryParams += `${key_}=${value_}`;
+        return this;
     }
 
     /**
@@ -377,6 +379,8 @@ class NacosNamingWatcherOptionsBuilder extends NacosOptionsBuilder {
     defaults() {
         if (!this._options.groupName) this._options.groupName = NacosConst.DEFAULT_GROUP
         if (!this._options.clusterName) this._options.clusterName = NacosConst.DEFAULT_CLUSTER_NAME
+
+        return this;
     }
 }
 
@@ -424,6 +428,8 @@ class NacosConfigWatcherOptionsBuilder extends NacosOptionsBuilder {
      */
     defaults() {
         if (!this._options.groupName) this._options.groupName = NacosConst.DEFAULT_GROUP
+
+        return this;
     }
 }
 
@@ -507,6 +513,59 @@ class NacosAgentOptionsBuilder extends NacosOptionsBuilder {
         this._options.groupName = groupName_;
         return this;
     }
+
+    /**
+     * 订阅的服务列表
+     * @param {Array<string>} subscribes_ 
+     * @returns 
+     */
+    subscribes(subscribes_) {
+        if (!subscribes_ || !Array.isArray(subscribes_)) {
+            return;
+        }
+        if (!this._options.subscribes || !this._options.subscribes) {
+            this._options.subscribes = [];
+        }
+        this._options.subscribes.push(...subscribes_);
+        return this;
+    }
+
+    /**
+     * 订阅的配置列表
+     */
+    watchKeys(watchKeys_) {
+        if (!watchKeys_ || !Array.isArray(watchKeys_)) {
+            return;
+        }
+        if (!this._options.watchKeys || !this._options.watchKeys) {
+            this._options.watchKeys = [];
+        }
+        this._options.watchKeys.push(...watchKeys_);
+        return this;
+    }
+
+    /**
+     * 代理上报元数据心跳间隔
+     * @param {Number} heartbeatInterval_ 
+     * @returns 
+     */
+    heartbeatInterval(heartbeatInterval_) {
+        if (heartbeatInterval_ <= 0) {
+            return;
+        }
+        this._options.heartbeatInterval = heartbeatInterval_;
+        return this;
+    }
+
+    /**
+     * 设置默认值
+     */
+    defaults() {
+        if (this._options.weight === undefined) {
+            this._options.weight === 1.0;
+        }
+        return this;
+    }
 }
 
 /**
@@ -559,4 +618,3 @@ module.exports = {
     NacosAgentOptionsBuilder,
     NacosOptionsFactory,
 }
-

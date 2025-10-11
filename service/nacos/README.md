@@ -2,6 +2,8 @@
 
 Nacos 服务封装
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/peng-qing/js_tools)
+
 ## 关于Nacos
 
 Nacos 是一个动态服务发现、配置管理和服务管理平台。它提供了一组简单易用的 RESTful API，用于发现、配置和管理微服务。
