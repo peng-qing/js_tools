@@ -1,6 +1,8 @@
 # js_tools
 js tools library
 
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/peng-qing/js_tools)
+
 ```bash
 
 ├── common          // 一些基础的组件实现
