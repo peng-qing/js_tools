@@ -92,7 +92,7 @@ typeUtils.isClassInstance = function (val_) {
         typeof val_ === "object" &&
         val_.constructor &&
         typeof val_.constructor === "function" &&
-        /^class\s/.test(Function.prototype.toString.call(val_.constructor));
+        /^class[\s{]/.test(Function.prototype.toString.call(val_.constructor));
 }
 
 // 判断原型链是否到顶端 非标准
