@@ -1,0 +1,13 @@
+{
+    "name": "esm_reload_test",
+    "version": "1.0.0",
+    "description": "esm reload test",
+    "main": "index.js",
+    "scripts": {
+        "test": "node --test index.js production.test.mjs"
+    },
+    "keywords": [],
+    "author": "pengqq",
+    "license": "MIT",
+    "type": "module"
+}

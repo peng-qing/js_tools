@@ -1,0 +1,38 @@
+// 1. 基础原型方法热更
+
+let suffix = "v1"; // 修改版本号用于测试热更
+
+export class BasicService {
+    constructor() {
+        this._mode = "release";
+    }
+
+    hello() {
+        console.log("[BasicService] hello " + suffix);
+        return "hello " + suffix;
+    }
+
+    greet() {
+        console.log("[BasicService] greet " + suffix);
+        return "greet " + suffix;
+    }
+
+    get mode() {
+        return this._mode + " v3";
+    }
+
+    set mode(value) {
+        this._mode = value + "";
+    }
+}
+
+// 修改版本号 热更前后两次请求结果中版本号应该不一致
+// 修改 getter / setter 热更前后两次请求结果中 getter / setter 结果应该不一致
+// 修改数据属性 热更前后两次请求结果中数据属性应该一致
+
+//  curl "http://localhost:3000/reload?filePath=./basic.js"
+
+//  curl "http://localhost:3000/process?handlerName=callBasicService"
+
+//  curl "http://localhost:3000/process?handlerName=callGetterSetterService"
+

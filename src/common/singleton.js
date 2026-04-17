@@ -5,7 +5,15 @@
  * @param {Object} targetClass 
  * @returns {Object}
  * @example
- *      export Test as singleton(TrueTest)
+ *      export Test as InjectSingleton(TrueTest)
+ * @description
+ *      使用 proxy 包装的对象 js 没有api可以获取到被代理的原始类
+ *      所以对于当前框架的 ESMModuleHotReloader 这种原型链替换的形式是无法实现热更的!!!!!
+ * 
+ *      如果一定要热更，也有一些方法可以实现：
+ *          1. 直接导出原始类 (但是会破坏单例的特性)
+ *          2. 在返回的 proxy 上加一个原始对象的引用 开后门处理 同时对 ESMModuleHotReloader 修改识别目标标记
+ *          3. ESMModuleHotReloader 想办法特殊处理 proxy 对象 使其可以被识别
  */
 function InjectSingleton(targetClass) {
     let instance = null;

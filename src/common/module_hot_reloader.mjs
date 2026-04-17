@@ -87,6 +87,17 @@ export class ESMModuleHotReloader {
     static _fileClassMap = new Map();
 
     /**
+     * 需要跳过热更的一些内置属性
+     * @type {String[]}
+     */
+    static _builtInProperties = [
+        "constructor",
+        "length",
+        "name",
+        "prototype",
+    ];
+
+    /**
      * 重新加载ESM模块
      * @param {String} moduleUrl 
      * @returns Promise<Object>
@@ -145,8 +156,8 @@ export class ESMModuleHotReloader {
 
         // 4. 将目标类单独进行原型链相关替换
         for (const exportKey of Object.keys(newModule)) {
-            const exportValue = newModule[exportKey];
-            if (!_extractClass(exportValue)) {
+            const exportValue = _extractClass(newModule[exportKey]);
+            if (!exportValue) {
                 // not class or class instance
                 continue;
             }
@@ -170,8 +181,8 @@ export class ESMModuleHotReloader {
         if (!classKeySet || classKeySet.size <= 0) {
             const oldModule = await import(fileUrl);
             for (const exportKey of Object.keys(oldModule)) {
-                const exportValue = oldModule[exportKey];
-                if (!_extractClass(exportValue)) {
+                const exportValue = _extractClass(oldModule[exportKey]);
+                if (!exportValue) {
                     continue;
                 }
                 const keyIndex = _generateClassKey(fileUrl, exportValue.name);
@@ -210,8 +221,8 @@ export class ESMModuleHotReloader {
 
         // 4. 将目标类单独进行原型链相关替换
         for (const exportKey of Object.keys(newModule)) {
-            const exportValue = newModule[exportKey];
-            if (!_extractClass(exportValue)) {
+            const exportValue = _extractClass(newModule[exportKey]);
+            if (!exportValue) {
                 // not class or class instance
                 continue;
             }
@@ -230,7 +241,7 @@ export class ESMModuleHotReloader {
      * @returns {Function} 类引用
      * @description
      *   1. 首次注册  注册到缓存中
-     *   2. 热更      将新类的方法和属性河北到旧类
+     *   2. 热更      将新类的方法和属性合并到旧类
      */
     static classDef(fileUrlOrPath, classExpr, onLoad = null) {
         // 1. 参数归一化 获取缓存判断是否是注册还是热更
@@ -241,7 +252,7 @@ export class ESMModuleHotReloader {
         // 2. 首次注册 
         if (!cacheInfo) {
             // 创建缓存信息
-            ESMModuleHotReloader._classCacheMap.set(classExpr.name, {
+            ESMModuleHotReloader._classCacheMap.set(classKey, {
                 classExpr: classExpr, // 类引用
                 fileUrl: fileUrl, // 文件URL
                 reloadFlag: false, // 是否正在进行热更新的标记
@@ -272,6 +283,61 @@ export class ESMModuleHotReloader {
         cacheInfo.reloadFlag = false;
 
         let oldClass = cacheInfo.classExpr;
-        
+        // 静态成员合并
+        let props = Object.getOwnPropertyNames(classExpr);
+        for (const propName of props) {
+            if (ESMModuleHotReloader._builtInProperties.includes(propName)) {
+                continue;
+            }
+            const descriptor = Object.getOwnPropertyDescriptor(classExpr, propName);
+            // 如果是 getter / setter 以及静态方法
+            // 使用新的替代老的
+            if (typeof descriptor.value === "function" || descriptor.get || descriptor.set) {
+                try {
+                    // 对于setter/getter 只能使用这种方式替换 否则会直接触发 getter/setter 调用
+                    // 对于普通静态方法 如果使用 oldClass[propName] = classExpr[propName] 方式
+                    // 其属性描述符始终是 enumerable: true, configurable: true, writable: true 
+                    // 所以使用 Object.defineProperty 方式替换 保证属性描述符不变
+                    Object.defineProperty(oldClass, propName, descriptor);
+                }
+                catch (err) {
+                    void err;
+                }
+                continue;
+            }
+            // 如果是普通数据属性 需要使用老的替换新的 避免丢失运行时状态
+            try {
+                if (oldClass[propName]) {
+                    // 如果旧类存在该属性 使用旧的替换新的
+                    classExpr[propName] = oldClass[propName];
+                }
+                else {
+                    // 如果旧类不存在该属性 使用新的替换旧的
+                    oldClass[propName] = classExpr[propName];
+                }
+            } catch (err) {
+                void err;
+            }
+        }
+
+        // 原型链成员函数替换 数据不修改
+        let oldPrototype = oldClass.prototype;
+        let newPrototype = classExpr.prototype;
+        props = Object.getOwnPropertyNames(newPrototype);
+        for (const propName of props) {
+            if (ESMModuleHotReloader._builtInProperties.includes(propName)) {
+                continue;
+            }
+            const descriptor = Object.getOwnPropertyDescriptor(newPrototype, propName);
+            if (typeof descriptor.value === "function" || descriptor.get || descriptor.set) {
+                try {
+                    Object.defineProperty(oldPrototype, propName, descriptor);
+                }
+                catch (err) {
+                    void err;
+                }
+                continue;
+            }
+        }
     }
 }
