@@ -1,6 +1,6 @@
 // 1. 基础原型方法热更
 
-let suffix = "v1"; // 修改版本号用于测试热更
+let suffix = "v2"; // 修改版本号用于测试热更
 
 export class BasicService {
     constructor() {
@@ -45,4 +45,9 @@ export class ChildService extends BasicService {
         console.log("[ChildService] hello child " + suffix);
         return "hello child " + suffix;
     }
+
+    // addFunc() {
+    //     return "addFunc child result " + suffix;
+    // }
+
 }

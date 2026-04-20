@@ -78,9 +78,8 @@ const fnCallChildService = async () => {
 }
 
 const fnCallExportFunctionService = async () => {
-    await ESMModuleHotReloader.preloadModule("./export_function.js");
-    const showBanner = ESMModuleHotReloader.createHotReloadFunction("./export_function.js", "showBanner");
-    const add = ESMModuleHotReloader.createHotReloadFunction("./export_function.js", "add");
+    const showBanner = await ESMModuleHotReloader.createHotReloadFunction("./export_function.js", "showBanner");
+    const add = await ESMModuleHotReloader.createHotReloadFunction("./export_function.js", "add");
 
     return {
         banner: showBanner(),
@@ -88,6 +87,31 @@ const fnCallExportFunctionService = async () => {
     }
 }
 
+const fnCallAddOrDelFunctionService = async () => {
+    const app = new ChildService();
+
+    let addFunc = app.addFunc || (() => "addFunc not found");
+
+    return {
+        addFuncResult: addFunc(),
+    }
+}
+
+const fnCallOnLoadCallbackService = async () => {
+    ESMModuleHotReloader.classDef("./basic.js", ChildService, (newModule, isReload) => {
+        console.log("[fnCallOnLoadCallbackService] onLoad success, " + " isReload: " + isReload);
+        if (isReload) {
+            console.log("[fnCallOnLoadCallbackService] onLoad success, suffix reset to v1");
+        }
+    });
+}
+
+const fnCallInstanceofService = async () => {
+    const app = new ChildService();
+    return {
+        instanceof: app instanceof ChildService,
+    }
+}
 
 const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -101,7 +125,8 @@ const server = http.createServer(async (req, res) => {
             return;
         }
         console.log("[reload] 开始热更文件: ", filePath);
-        // 进行热更
+        // 进行热更 
+        // 支持空文件
         await ESMModuleHotReloader.reloadModule(filePath);
         console.log("[reload] 热更完成");
 
@@ -151,6 +176,24 @@ const server = http.createServer(async (req, res) => {
             // 这里在 ESMModuleHotReloader 中已经支持了函数包装器
             obj[handlerName] = await fnCallExportFunctionService();
         }
+        else if (handlerName == "callAddOrDelFunctionService") {
+            // 添加/删除函数
+            // 1. 新增接口 支持
+            // 2. 删除接口 旧方法残留
+            obj[handlerName] = await fnCallAddOrDelFunctionService();
+        }
+        else if (handlerName == "callOnLoadCallbackService") {
+            // 加载/热更 回调函数
+            // 1. 首次加载 支持
+            // 2. 热更 支持
+            obj[handlerName] = await fnCallOnLoadCallbackService();
+        }
+        else if (handlerName == "callInstanceofService") {
+            // instanceof 判断
+            // 1. 首次加载 支持
+            // 2. 热更 支持
+            obj[handlerName] = await fnCallInstanceofService();
+        }
 
         console.log("[process] 处理函数执行完成");
         res.writeHead(200, { "Content-Type": "application/json" });
@@ -171,7 +214,9 @@ process.on("SIGINT", () => {
 });
 process.on("uncaughtException", (err) => {
     console.error("[uncaughtException] 捕获到未处理的异常: ", err);
+    process.exit(1);
 });
 process.on("unhandledRejection", (reason, promise) => {
     console.error("[unhandledRejection] 捕获到未处理的拒绝: ", reason, promise);
+    process.exit(1);
 });
