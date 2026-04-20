@@ -1,5 +1,7 @@
 "use strict";
 
+const ROW_PROXY_CLASS_KEY = Symbol.for("raw_class");
+
 /**
  * 通过代理实现单例
  * @param {Object} targetClass 
@@ -18,7 +20,7 @@
 function InjectSingleton(targetClass) {
     let instance = null;
 
-    return new Proxy(targetClass, {
+    let proxy = new Proxy(targetClass, {
         construct(targetClass, args) {
             if (!instance) {
                 instance = new targetClass(...args);
@@ -26,6 +28,9 @@ function InjectSingleton(targetClass) {
             return instance;
         }
     });
+    // 设置原始类引用 支持热更
+    proxy[ROW_PROXY_CLASS_KEY] = targetClass;
+    return proxy;
 }
 
 /**

@@ -3,6 +3,8 @@
 import path from "path";
 import url from "url";
 
+const ROW_PROXY_CLASS_KEY = Symbol.for("raw_class");
+
 /**
  * 生成类的全局唯一标识 使用 fileUrl 和 className 拼接组合
  * 保证不同文件中出现的相同类名不会冲突
@@ -54,6 +56,11 @@ function _extractClass(exported) {
         /^class[\s{]/.test(Function.prototype.toString.call(exported.constructor))) {
         return exported.constructor;
     }
+    // 有可能是 proxy 对象 需要检查是否存在原始类引用
+    if (exported &&
+        exported[ROW_PROXY_CLASS_KEY]) {
+        return _extractClass(exported[ROW_PROXY_CLASS_KEY]);
+    }
     return null;
 }
 
@@ -87,6 +94,12 @@ export class ESMModuleHotReloader {
     static _fileClassMap = new Map();
 
     /**
+     * 模块缓存映射 缓存最新的模块版本
+     * @type {Map<string, Module>}
+     */
+    static _moduleCacheMap = new Map();
+
+    /**
      * 需要跳过热更的一些内置属性
      * @type {String[]}
      */
@@ -116,7 +129,10 @@ export class ESMModuleHotReloader {
         let v = ESMModuleHotReloader._reloadUrlMap.get(fileUrl) || 0;
         v += 1;
         ESMModuleHotReloader._reloadUrlMap.set(fileUrl, v);
-        return await import(`${fileUrl}?v=${v}`);
+
+        let newModule = await import(`${fileUrl}?v=${v}`);
+        ESMModuleHotReloader._moduleCacheMap.set(fileUrl, newModule);
+        return newModule;
     }
 
     /**
@@ -180,6 +196,11 @@ export class ESMModuleHotReloader {
         // 2. 检查是否被注册 没有注册会自动在首次热更时进行注册
         if (!classKeySet || classKeySet.size <= 0) {
             const oldModule = await import(fileUrl);
+            // 缓存最新模块版本
+            if (!ESMModuleHotReloader._moduleCacheMap.has(fileUrl)) {
+                ESMModuleHotReloader._moduleCacheMap.set(fileUrl, oldModule);
+            }
+
             for (const exportKey of Object.keys(oldModule)) {
                 const exportValue = _extractClass(oldModule[exportKey]);
                 if (!exportValue) {
@@ -197,13 +218,15 @@ export class ESMModuleHotReloader {
 
         // 3. 设置热更标记 准备热更相关模块
         const reloadCacheList = [];
-        for (const classKey of classKeySet) {
-            const cacheInfo = ESMModuleHotReloader._classCacheMap.get(classKey);
-            if (!cacheInfo) {
-                continue;
+        if (classKeySet && classKeySet.size > 0) {
+            for (const classKey of classKeySet) {
+                const cacheInfo = ESMModuleHotReloader._classCacheMap.get(classKey);
+                if (!cacheInfo) {
+                    continue;
+                }
+                cacheInfo.reloadFlag = true;
+                reloadCacheList.push(cacheInfo);
             }
-            cacheInfo.reloadFlag = true;
-            reloadCacheList.push(cacheInfo);
         }
 
         // 4. 开始热更 加载新模块 触发patch操作
@@ -338,6 +361,44 @@ export class ESMModuleHotReloader {
                 }
                 continue;
             }
+        }
+    }
+
+    /**
+     * 预加载模块 缓存最新模块版本
+     * @param {String} filePathOrUrl 文件路径或者url
+     * @returns {Promise<void>}
+     */
+    static async preloadModule(filePathOrUrl) {
+        const fileUrl = _nomarlizeFileUrl(filePathOrUrl);
+        if (ESMModuleHotReloader._moduleCacheMap.has(fileUrl)) {
+            return;
+        }
+        const module = await import(fileUrl);
+        ESMModuleHotReloader._moduleCacheMap.set(fileUrl, module);
+    }
+
+    /**
+     * 创建热更函数包装器
+     * @param {String} filePathOrUrl 文件路径或者url
+     * @param {String} functionName 函数名
+     * @returns {Function} 热更函数包装器
+     */
+    static createHotReloadFunction(filePathOrUrl, functionName) {
+        const fileUrl = _nomarlizeFileUrl(filePathOrUrl);
+
+        // 返回包装器
+        return function (...args) {
+            // 获取最新模块版本
+            const mod = ESMModuleHotReloader._moduleCacheMap.get(fileUrl);
+            if (!mod) {
+                throw new Error(`Module ${fileUrl} not found`);
+            }
+            const targetFunc = mod[functionName];
+            if (!targetFunc || typeof targetFunc !== "function") {
+                throw new Error(`Function ${functionName} not found in module ${fileUrl}`);
+            }
+            return targetFunc.apply(this, args);
         }
     }
 }

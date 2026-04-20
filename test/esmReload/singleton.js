@@ -4,23 +4,23 @@ import { Singleton, InjectSingleton } from "../../src/common/singleton.js";
 export class AExtendService extends Singleton {
 
     showMeVersion() {
-        console.log("[AExtendService] showMeVersion v1");
-        return "AExtendService v1";
+        console.log("[AExtendService] showMeVersion v2");
+        return "AExtendService v2";
     }
 }
 
 class BRowProxyService {
 
     showMeVersion() {
-        console.log("[BProxyService] showMeVersion v1");
-        return "BProxyService v1";
+        console.log("[BProxyService] showMeVersion v2");
+        return "BProxyService v2";
     }
 }
 
 class CNewRowService {
     showMeVersion() {
-        console.log("[CNewService] showMeVersion v1");
-        return "CNewService v1";
+        console.log("[CNewService] showMeVersion v2");
+        return "CNewService v2";
     }
 }
 

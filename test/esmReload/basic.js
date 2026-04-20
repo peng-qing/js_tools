@@ -8,17 +8,17 @@ export class BasicService {
     }
 
     hello() {
-        console.log("[BasicService] hello " + suffix);
-        return "hello " + suffix;
+        console.log("[BasicService] hello parent " + suffix);
+        return "hello parent " + suffix;
     }
 
     greet() {
-        console.log("[BasicService] greet " + suffix);
-        return "greet " + suffix;
+        console.log("[BasicService] greet parent" + suffix);
+        return "greet parent " + suffix;
     }
 
     get mode() {
-        return this._mode + " v3";
+        return this._mode + " v1";
     }
 
     set mode(value) {
@@ -36,3 +36,13 @@ export class BasicService {
 
 //  curl "http://localhost:3000/process?handlerName=callGetterSetterService"
 
+export class ChildService extends BasicService {
+    constructor() {
+        super();
+    }
+
+    hello() {
+        console.log("[ChildService] hello child " + suffix);
+        return "hello child " + suffix;
+    }
+}
