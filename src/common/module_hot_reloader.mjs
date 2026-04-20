@@ -362,30 +362,26 @@ export class ESMModuleHotReloader {
                 continue;
             }
         }
-    }
 
-    /**
-     * 预加载模块 缓存最新模块版本
-     * @param {String} filePathOrUrl 文件路径或者url
-     * @returns {Promise<void>}
-     */
-    static async preloadModule(filePathOrUrl) {
-        const fileUrl = _nomarlizeFileUrl(filePathOrUrl);
-        if (ESMModuleHotReloader._moduleCacheMap.has(fileUrl)) {
-            return;
+        if (cacheInfo.onLoad) {
+            cacheInfo.onLoad(classExpr, true);
         }
-        const module = await import(fileUrl);
-        ESMModuleHotReloader._moduleCacheMap.set(fileUrl, module);
     }
 
     /**
      * 创建热更函数包装器
      * @param {String} filePathOrUrl 文件路径或者url
      * @param {String} functionName 函数名
-     * @returns {Function} 热更函数包装器
+     * @returns {Promise<Function>} 热更函数包装器
      */
-    static createHotReloadFunction(filePathOrUrl, functionName) {
+    static async createHotReloadFunction(filePathOrUrl, functionName) {
         const fileUrl = _nomarlizeFileUrl(filePathOrUrl);
+
+        // 如果缓存未命中 直接预加载模块
+        if (!ESMModuleHotReloader._moduleCacheMap.has(fileUrl)) {
+            const module = await import(fileUrl);
+            ESMModuleHotReloader._moduleCacheMap.set(fileUrl, module);
+        }
 
         // 返回包装器
         return function (...args) {
