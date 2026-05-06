@@ -163,4 +163,18 @@ randomUtils.getWeightNonRepeatRandom = function (weightMap_, count_) {
     return result;
 }
 
+
+/**
+ * 生成服从标准正态分布的随机数对 (x, y)
+ * 使用 Box-Muller 变换
+ * @returns {Array} 包含两个服从标准正态分布的随机数 [x, y]
+ */
+randomUtils.boxMuller = function () {
+    const u1 = Math.random();
+    const u2 = Math.random();
+    const z0 = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2);
+    const z1 = Math.sqrt(-2.0 * Math.log(u1)) * Math.sin(2.0 * Math.PI * u2);
+    return [z0, z1];
+}
+
 module.exports = randomUtils;

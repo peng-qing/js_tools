@@ -113,6 +113,13 @@ const fnCallInstanceofService = async () => {
     }
 }
 
+const fnCallPrivatePropertyService = async () => {
+    const app = new ChildService();
+    return {
+        privateMethod: app.showPrivateMethod(),
+    }
+}
+
 const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathname = url.pathname;
@@ -193,6 +200,10 @@ const server = http.createServer(async (req, res) => {
             // 1. 首次加载 支持
             // 2. 热更 支持
             obj[handlerName] = await fnCallInstanceofService();
+        }
+        else if (handlerName == "callPrivatePropertyService") {
+            // 私有属性 & 私有方法
+            obj[handlerName] = await fnCallPrivatePropertyService();
         }
 
         console.log("[process] 处理函数执行完成");

@@ -37,8 +37,10 @@ export class BasicService {
 //  curl "http://localhost:3000/process?handlerName=callGetterSetterService"
 
 export class ChildService extends BasicService {
+    #privateSuffix = "";
     constructor() {
         super();
+        this.privateSuffix = "v3";
     }
 
     hello() {
@@ -50,4 +52,11 @@ export class ChildService extends BasicService {
     //     return "addFunc child result " + suffix;
     // }
 
+    #privateMethod() {
+        return "privateMethod child result after hot reload " + this.privateSuffix;
+    }
+
+    showPrivateMethod() {
+        return this.#privateMethod();
+    }
 }
