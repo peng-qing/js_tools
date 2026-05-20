@@ -6,8 +6,43 @@
 class BaseLogger {
 
     constructor() {
+        if (new.target === BaseLogger) {
+            throw new Error("BaseLogger is a base class and cannot be instantiated directly");
+        }
     }
 
+    trace(...msgs) {
+        void msgs;
+    }
+
+    debug(...msgs) {
+        void msgs;
+    }
+
+    info(...msgs) {
+        void msgs;
+    }
+
+    warn(...msgs) {
+        void msgs;
+    }
+
+    error(...msgs) {
+        void msgs;
+    }
+
+    critical(...msgs) {
+        void msgs;
+    }
+}
+
+/**
+ * 控制台日志器
+ */
+class ConsoleLogger extends BaseLogger {
+    constructor() {
+        super();
+    }
     trace(...msgs) {
         console.trace(msgs.join(" "));
     }
@@ -35,4 +70,5 @@ class BaseLogger {
 
 module.exports = {
     BaseLogger,
+    ConsoleLogger,
 }
