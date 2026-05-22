@@ -2,13 +2,13 @@
 
 const mysql = require("mysql2/promise");
 const { MysqlOptions } = require("./mysql_options.js");
-const { ConsoleLogger } = require("../common/logger.js");
+const { ConsoleLogger } = require("../../common/logger.js");
 
 class MysqlClient {
     /**
      * 数据库客户端
      * @param {MysqlOptions} options 
-     * @param {import("../common/logger.js").BaseLogger} logger 
+     * @param {import("../../common/logger.js").BaseLogger} logger 
      */
     constructor(options, logger) {
         if (!options) {
@@ -31,7 +31,7 @@ class MysqlClient {
         this.shardIndexs = new Map();
         /**
          * 日志器
-         * @type {import("../common/logger.js").BaseLogger}
+         * @type {import("../../common/logger.js").BaseLogger}
          */
         this.logger = logger || new ConsoleLogger();
 

@@ -11,8 +11,8 @@ src/
 ├── common              // 基础组件
 │   ├── module_hot_reloader.mjs  // ESM 模块热重载器
 │   └── singleton.js             // 单例模式实现
-├── dbdriver            // 数据库驱动封装 (待完善)
-│   └── mysql
+├── dbdriver            // 数据库驱动封装
+│   └── mysql           // mysql2 连接池、分片、BaseTable
 ├── graphic
 ├── service             // 服务封装
 │   └── nacos           // nacos-sdk-nodejs 封装
@@ -24,6 +24,7 @@ src/
 | 模块 | 说明 |
 |------|------|
 | [common](./src/common/README.md) | 基础组件（热重载、单例等） |
+| [dbdriver](./src/dbdriver/README.md) | MySQL 驱动（连接池、分片、BaseTable） |
 
 ## License
 
