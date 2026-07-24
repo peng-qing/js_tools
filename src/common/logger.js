@@ -64,7 +64,7 @@ class ConsoleLogger extends BaseLogger {
     }
 
     critical(...msgs) {
-        console.critical(msgs.join(" "));
+        console.error(msgs.join(" "));
     }
 }
 

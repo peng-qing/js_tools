@@ -40,7 +40,7 @@ export class ChildService extends BasicService {
     #privateSuffix = "";
     constructor() {
         super();
-        this.privateSuffix = "v3";
+        this.privateSuffix = "v5";
     }
 
     hello() {

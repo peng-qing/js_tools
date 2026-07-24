@@ -199,7 +199,11 @@ const server = http.createServer(async (req, res) => {
             // instanceof 判断
             // 1. 首次加载 支持
             // 2. 热更 支持
-            obj[handlerName] = await fnCallInstanceofService();
+            if (!server.test_obj) {
+                server.test_obj = new ChildService();
+            }
+            obj[handlerName] = server.test_obj instanceof ChildService;
+            // obj[handlerName] = await fnCallInstanceofService();
         }
         else if (handlerName == "callPrivatePropertyService") {
             // 私有属性 & 私有方法
