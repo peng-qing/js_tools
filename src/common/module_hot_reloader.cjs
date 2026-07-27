@@ -1,8 +1,6 @@
 "use strict";
 
-const stdFile = require('fs');
 const stdPath = require('path');
-const Module = require('module');
 
 const typeUtils = require("../utils/type_utils.js");
 
@@ -29,12 +27,12 @@ class CommonJSModuleHotReloader {
     ];
 
     /** 
-     * 模块缓存
-     * @type {Map<String, Array<module>>}
+     * 模块导出引用缓存
+     * @type {Map<String, Array<any>>}
      * @description 
-     *  为什么要缓存所有的模块缓存?
+     *  为什么要缓存模块导出引用?
      *  因为可能虽然 require.cache 被删除，但是该模块仍然被其他模块所引用
-     *  所以缓存所有新的模块缓存，并在每次热更将所有缓存都进行热更替换 保证一致性
+     *  所以需要保存旧 module.exports 引用，并在每次热更时对这些旧引用进行 patch
      */
     static _requiredCaches = new Map();
     /**
@@ -43,7 +41,7 @@ class CommonJSModuleHotReloader {
      * @description 
      *  为什么要缓存无装饰导出函数?
      *  因为无装饰导出函数在热更时需要被替换
-     *  所以缓存所有无装饰导出函数，并在每次热更将所有无装饰导出函数都进行热更替换 保证一致性
+     *  所以这里只缓存每个模块当前最新函数，包装器每次调用时读取它
      */
     static _plainFuncCaches = new Map();
 
@@ -51,55 +49,48 @@ class CommonJSModuleHotReloader {
      * 重加载目标文件
      * @param {string} fileUrl 
      * @description
-     *  CommonJs需要通过加载文件名加载 统一转为绝对路径
+     *  CommonJS 使用 require.resolve 解析出 Node 实际加载的模块路径
      */
     static reloadURL(fileUrl) {
-        const absPath = stdPath.resolve(fileUrl);
-        if (!stdFile.existsSync(absPath)) {
-            throw new Error(`reload file ${absPath} not exists`);
-        }
+        const modulePath = CommonJSModuleHotReloader._resolveModulePath(fileUrl);
         // 将老的模块添加到缓存记录
-        CommonJSModuleHotReloader._addOldModuleToCacahes(absPath);
+        CommonJSModuleHotReloader._addOldModuleToCacahes(modulePath);
         // 删除旧的模块缓存
-        const oldExports = CommonJSModuleHotReloader._clearRequiredCaches(absPath);
+        const oldExports = CommonJSModuleHotReloader._clearRequiredCaches(modulePath);
         // 重新加载新的模块
-        const { success, newModule, isPlainFunction } = CommonJSModuleHotReloader._reloadModule(absPath);
-        // 如果是直接导出类 需要会写到 module.exports 上，否则热更前后的新旧 require 引用会分裂导致状态不一致
-        // oldClassObj instanceof newClass 为 false
+        const { success, newModule, isPlainFunction } = CommonJSModuleHotReloader._reloadModule(modulePath);
+        void newModule;
+        // 非普通函数导出需要回写旧 exports，否则后续 require 会拿到新导出，导致新旧引用分裂。
         if (success && !isPlainFunction && oldExports) {
-            const requirePath = require.resolve(absPath);
-            if (require.cache[requirePath]) {
-                require.cache[requirePath].exports = oldExports;
+            if (require.cache[modulePath]) {
+                require.cache[modulePath].exports = oldExports;
             }
         }
     }
 
     /**
      * 创建热更函数包装器
-     * @param {string} absPath 绝对路径
+     * @param {string} fileUrl 文件路径
      * @returns {Function}
      */
     static createHotReloadFunction(fileUrl) {
-        const absPath = stdPath.resolve(fileUrl);
-        if (!stdFile.existsSync(absPath)) {
-            throw new Error(`create hot reload function but file ${absPath} not exists`);
-        }
+        const modulePath = CommonJSModuleHotReloader._resolveModulePath(fileUrl);
 
         // 缓存不存在
-        if (!CommonJSModuleHotReloader._plainFuncCaches.has(absPath)) {
-            const exported = require(absPath);
+        if (!CommonJSModuleHotReloader._plainFuncCaches.has(modulePath)) {
+            const exported = require(modulePath);
             if (!CommonJSModuleHotReloader._isPlainFunction(exported)) {
-                throw new Error(`create hot reload function but file ${absPath} not export a plain function`);
+                throw new Error(`create hot reload function but file ${modulePath} not export a plain function`);
             }
             // 缓存导出的普通函数
-            CommonJSModuleHotReloader._plainFuncCaches.set(absPath, exported);
+            CommonJSModuleHotReloader._plainFuncCaches.set(modulePath, exported);
         }
 
         // 返回函数包装器
         return function (...args) {
-            const latestFunc = CommonJSModuleHotReloader._plainFuncCaches.get(absPath);
+            const latestFunc = CommonJSModuleHotReloader._plainFuncCaches.get(modulePath);
             if (!latestFunc || !typeUtils.isFunction(latestFunc)) {
-                throw new Error(`create hot reload function but file ${absPath} not export a plain function`);
+                throw new Error(`create hot reload function but file ${modulePath} not export a plain function`);
             }
             return latestFunc.apply(this, args);
         }
@@ -107,20 +98,20 @@ class CommonJSModuleHotReloader {
 
     /**
      * 重新加载模块
-     * @param {string} absPath 绝对路径
+     * @param {string} modulePath require.resolve 后的模块路径
      */
-    static _reloadModule(absPath) {
+    static _reloadModule(modulePath) {
         // 1. 加载新模块
-        const newModule = require(absPath);
+        const newModule = require(modulePath);
 
         // 如果是直接导出普通函数
         if (CommonJSModuleHotReloader._isPlainFunction(newModule)) {
-            CommonJSModuleHotReloader._plainFuncCaches.set(absPath, newModule);
+            CommonJSModuleHotReloader._plainFuncCaches.set(modulePath, newModule);
             return { success: true, newModule: newModule, isPlainFunction: true };
         }
 
         // 2. 获取所有模块引用
-        const allRequiredCaches = CommonJSModuleHotReloader._requiredCaches.get(absPath);
+        const allRequiredCaches = CommonJSModuleHotReloader._requiredCaches.get(modulePath);
         if (!allRequiredCaches || allRequiredCaches.length <= 0) {
             return { success: false, newModule: newModule, isPlainFunction: false };
         }
@@ -245,22 +236,19 @@ class CommonJSModuleHotReloader {
 
     /**
      * 清除模块引用的缓存
-     * @param {string} absPath 绝对路径
+     * @param {string} modulePath require.resolve 后的模块路径
      * @returns {any | null} 返回被清除的模块的 exports
      */
-    static _clearRequiredCaches(absPath) {
-        // require.resolve 拿到真实 key 用于删除 require cache
-        // 避免 absPath 遇到省略扩展名、目录入口、软链接等 导致删除失败
-        const requirePath = require.resolve(absPath);
-        const oldModule = require.cache[requirePath];
+    static _clearRequiredCaches(modulePath) {
+        const oldModule = require.cache[modulePath];
         if (!oldModule) {
             return null;
         }
 
         // 删除全局模块缓存
-        CommonJSModuleHotReloader._delGlobalModuleCaches(requirePath);
+        CommonJSModuleHotReloader._delGlobalModuleCaches(modulePath);
         // 删除 require cache
-        delete require.cache[requirePath];
+        delete require.cache[modulePath];
 
         return oldModule.exports;
     }
@@ -288,18 +276,27 @@ class CommonJSModuleHotReloader {
     }
 
     /**
-     * 添加老的模块到缓存记录
-     * @param {string} absPath 绝对路径
+     * 解析 CommonJS 模块真实路径，同时作为内部缓存和 require.cache 的统一 key
+     * @param {string} fileUrl 文件路径
+     * @returns {string}
      */
-    static _addOldModuleToCacahes(absPath) {
-        const requireModule = require(absPath);
+    static _resolveModulePath(fileUrl) {
+        return require.resolve(stdPath.resolve(fileUrl));
+    }
+
+    /**
+     * 添加老的模块到缓存记录
+     * @param {string} modulePath require.resolve 后的模块路径
+     */
+    static _addOldModuleToCacahes(modulePath) {
+        const requireModule = require(modulePath);
         if (CommonJSModuleHotReloader._isPlainFunction(requireModule)) {
             return;
         }
-        let oldCaches = CommonJSModuleHotReloader._requiredCaches.get(absPath);
+        let oldCaches = CommonJSModuleHotReloader._requiredCaches.get(modulePath);
         if (!oldCaches) {
             oldCaches = [];
-            CommonJSModuleHotReloader._requiredCaches.set(absPath, oldCaches);
+            CommonJSModuleHotReloader._requiredCaches.set(modulePath, oldCaches);
         }
 
         if (!oldCaches.includes(requireModule)) {
@@ -309,15 +306,15 @@ class CommonJSModuleHotReloader {
 
     /**
      * 删除全局模块缓存
-     * @param {string} absPath 绝对路径
+     * @param {string} modulePath require.resolve 后的模块路径
      */
-    static _delGlobalModuleCaches(absPath) {
+    static _delGlobalModuleCaches(modulePath) {
         // 这里不能使用 module.exports 因为会覆盖全局模块
         const nodeVersion = process.versions.node.split(".");
         const majorVersion = Number(nodeVersion[0]);
         const minorVersion = Number(nodeVersion[1]);
 
-        const cacheModule = require.cache[absPath];
+        const cacheModule = require.cache[modulePath];
         if (majorVersion < 14 || (majorVersion === 14 && minorVersion < 6)) {
             // module.parent is deprecated since node v14.6.0
             if (cacheModule && cacheModule.parent && cacheModule.parent.children && Array.isArray(cacheModule.parent.children)) {

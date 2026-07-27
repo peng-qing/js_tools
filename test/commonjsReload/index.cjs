@@ -12,7 +12,7 @@ const objectService = require("./object_service.cjs");
 const SingletonService = require("./singleton.cjs");
 const arrayExport = require("./array_export.cjs");
 
-const hotHandler = CommonJSModuleHotReloader.createHotReloadFunction("../commonjsReload/export_function.cjs");
+const hotHandler = CommonJSModuleHotReloader.createHotReloadFunction(path.resolve(__dirname, "export_function.cjs"));
 
 const state = {
     basicInstance: new BasicService("Ada"),

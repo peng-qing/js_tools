@@ -195,7 +195,13 @@ const { CommonJSModuleHotReloader } = require("./src/common/module_hot_reloader.
 CommonJSModuleHotReloader.reloadURL("./my_service.cjs");
 ```
 
-当前实现会先用 `path.resolve(fileUrl)` 判断文件是否存在，因此应传入真实文件路径，例如 `./my_service.cjs` 或 `./my_service.js`。暂不支持只传 `./my_service` 再依赖 Node 自动补扩展名。
+当前实现使用 `require.resolve(path.resolve(fileUrl))` 解析模块真实路径。它会按 CommonJS 规则解析目录入口和 `require.cache` key；解析失败会直接抛出 `MODULE_NOT_FOUND`。
+
+注意：Node 默认只会自动补 `.js`、`.json`、`.node` 等 CommonJS 扩展名，不会为省略扩展名的路径自动补 `.cjs`。如果目标文件是 `.cjs`，应传入完整文件名：
+
+```javascript
+CommonJSModuleHotReloader.reloadURL("./my_service.cjs");
+```
 
 直接导出普通函数时，函数引用无法原地替换，需要使用包装器：
 
@@ -271,7 +277,7 @@ first.show();                    // 新版本方法
 
 **1. 路径 key**
 
-内部业务缓存使用 `path.resolve(fileUrl)` 作为 key，`require.cache` 操作使用 `require.resolve(absPath)` 拿 Node 真实缓存 key。
+内部业务缓存和 `require.cache` 操作统一使用 `require.resolve(path.resolve(fileUrl))` 的结果作为 key。这样 `./user`、`./user.js` 等指向同一模块的写法不会被拆成多个热更缓存记录。
 
 **2. `require.cache` 回写**
 
