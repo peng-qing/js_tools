@@ -66,7 +66,7 @@ class CommonJSModuleHotReloader {
         const { success, newModule, isPlainFunction } = CommonJSModuleHotReloader._reloadModule(absPath);
         // 如果是直接导出类 需要会写到 module.exports 上，否则热更前后的新旧 require 引用会分裂导致状态不一致
         // oldClassObj instanceof newClass 为 false
-        if (success && !isPlainFunction) {
+        if (success && !isPlainFunction && oldExports) {
             const requirePath = require.resolve(absPath);
             if (require.cache[requirePath]) {
                 require.cache[requirePath].exports = oldExports;
@@ -134,8 +134,8 @@ class CommonJSModuleHotReloader {
                 continue;
             }
             // module.export is a Proxy
-            if (requireCache[CommonJSModuleHotReloader.ROW_PROXY_CLASS_KEY] &&
-                newModule[CommonJSModuleHotReloader.ROW_PROXY_CLASS_KEY]) {
+            if (CommonJSModuleHotReloader._isProxyClass(requireCache) &&
+                CommonJSModuleHotReloader._isProxyClass(newModule)) {
                 // 代理对象热更
                 let oldClassCtor = requireCache[CommonJSModuleHotReloader.ROW_PROXY_CLASS_KEY];
                 let newClassCtor = newModule[CommonJSModuleHotReloader.ROW_PROXY_CLASS_KEY];
@@ -273,7 +273,18 @@ class CommonJSModuleHotReloader {
      * @returns {boolean}
      */
     static _isPlainFunction(val) {
-        return typeUtils.isFunction(val) && !typeUtils.isClass(val);
+        return typeUtils.isFunction(val) &&
+            !typeUtils.isClass(val) &&
+            !CommonJSModuleHotReloader._isProxyClass(val);
+    }
+
+    /**
+     * 判断是否是代理类 - 只识别热更相关的模块代理
+     * @param {any} val 
+     * @returns {boolean}
+     */
+    static _isProxyClass(val) {
+        return val && val[CommonJSModuleHotReloader.ROW_PROXY_CLASS_KEY];
     }
 
     /**
