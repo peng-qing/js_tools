@@ -18,7 +18,7 @@ class CommonJSModuleHotReloader {
      * 代理对象原始类对象引用
      * 为了让通过代理的对象支持热更的特殊 symbol key 识别
      */
-    static ROW_PROXY_CLASS_KEY = Symbol("raw_class");
+    static ROW_PROXY_CLASS_KEY = Symbol.for("raw_class");
 
     /** 跳过一些内置属性 */
     static _builtInProperties = [
@@ -61,9 +61,17 @@ class CommonJSModuleHotReloader {
         // 将老的模块添加到缓存记录
         CommonJSModuleHotReloader._addOldModuleToCacahes(absPath);
         // 删除旧的模块缓存
-        CommonJSModuleHotReloader._clearRequiredCaches(absPath);
+        const oldModule = CommonJSModuleHotReloader._clearRequiredCaches(absPath);
         // 重新加载新的模块
-        CommonJSModuleHotReloader._reloadModule(absPath);
+        const { success, newModule, isPlainFunction } = CommonJSModuleHotReloader._reloadModule(absPath);
+        // 如果是直接导出类 需要会写到 module.exports 上，否则热更前后的新旧 require 引用会分裂导致状态不一致
+        // oldClassObj instanceof newClass 为 false
+        if (success && !isPlainFunction) {
+            const requirePath = require.resolve(absPath);
+            if (require.cache[requirePath]) {
+                require.cache[requirePath].exports = oldModule;
+            }
+        }
     }
 
     /**
@@ -108,13 +116,13 @@ class CommonJSModuleHotReloader {
         // 如果是直接导出普通函数
         if (CommonJSModuleHotReloader._isPlainFunction(newModule)) {
             CommonJSModuleHotReloader._plainFuncCaches.set(absPath, newModule);
-            return true;
+            return { success: true, newModule: newModule, isPlainFunction: true };
         }
 
         // 2. 获取所有模块引用
         const allRequiredCaches = CommonJSModuleHotReloader._requiredCaches.get(absPath);
         if (!allRequiredCaches || allRequiredCaches.length <= 0) {
-            return false;
+            return { success: false, newModule: newModule, isPlainFunction: false };
         }
 
         // 3. 遍历所有模块引用 进行热更
@@ -155,7 +163,7 @@ class CommonJSModuleHotReloader {
         }
 
         // 4. 返回是否热更成功
-        return true;
+        return { success: true, newModule: newModule, isPlainFunction: false };
     }
 
     /**
@@ -238,6 +246,7 @@ class CommonJSModuleHotReloader {
     /**
      * 清除模块引用的缓存
      * @param {string} absPath 绝对路径
+     * @returns {module | null} 返回被清除的模块
      */
     static _clearRequiredCaches(absPath) {
         // require.resolve 拿到真实 key 用于删除 require cache
@@ -245,13 +254,15 @@ class CommonJSModuleHotReloader {
         const requirePath = require.resolve(absPath);
         const oldModule = require.cache[requirePath];
         if (!oldModule) {
-            return;
+            return null;
         }
 
         // 删除全局模块缓存
         CommonJSModuleHotReloader._delGlobalModuleCaches(requirePath);
         // 删除 require cache
         delete require.cache[requirePath];
+
+        return oldModule;
     }
 
     /**
