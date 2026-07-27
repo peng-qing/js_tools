@@ -61,7 +61,7 @@ class CommonJSModuleHotReloader {
         // 将老的模块添加到缓存记录
         CommonJSModuleHotReloader._addOldModuleToCacahes(absPath);
         // 删除旧的模块缓存
-        const oldModule = CommonJSModuleHotReloader._clearRequiredCaches(absPath);
+        const oldExports = CommonJSModuleHotReloader._clearRequiredCaches(absPath);
         // 重新加载新的模块
         const { success, newModule, isPlainFunction } = CommonJSModuleHotReloader._reloadModule(absPath);
         // 如果是直接导出类 需要会写到 module.exports 上，否则热更前后的新旧 require 引用会分裂导致状态不一致
@@ -69,7 +69,7 @@ class CommonJSModuleHotReloader {
         if (success && !isPlainFunction) {
             const requirePath = require.resolve(absPath);
             if (require.cache[requirePath]) {
-                require.cache[requirePath].exports = oldModule;
+                require.cache[requirePath].exports = oldExports;
             }
         }
     }
@@ -246,7 +246,7 @@ class CommonJSModuleHotReloader {
     /**
      * 清除模块引用的缓存
      * @param {string} absPath 绝对路径
-     * @returns {module | null} 返回被清除的模块
+     * @returns {any | null} 返回被清除的模块的 exports
      */
     static _clearRequiredCaches(absPath) {
         // require.resolve 拿到真实 key 用于删除 require cache
@@ -262,7 +262,7 @@ class CommonJSModuleHotReloader {
         // 删除 require cache
         delete require.cache[requirePath];
 
-        return oldModule;
+        return oldModule.exports;
     }
 
     /**
