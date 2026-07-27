@@ -420,13 +420,12 @@ class CommonJSModulePatchReloader {
      * @returns {any | null} 返回新模块的 exports
      */
     static _loadFreshModule(modulePath) {
-        // 创建新的 Module, 通过创建新的临时 Module 的方式加载新文件
-        // 拿到新 exports 后 patch 旧引用, 可以避免污染 require.cache
+        // 创建临时 Module 加载目标文件，拿到新 exports 后 patch 到旧引用。
+        // 这条路径不会通过 Module._load，因此不会把临时模块写入 require.cache。
         const newModule = new Module(modulePath);
         newModule.filename = modulePath;
-        // 私有api 不稳定
+        // Node 私有 API，不属于稳定兼容承诺；升级 Node 前需要回归验证。
         newModule.paths = Module._nodeModulePaths(stdPath.dirname(modulePath));
-        // 编译执行 不会进入 require.cache 所以不会污染全局
         newModule.load(modulePath);
         return newModule.exports;
     }

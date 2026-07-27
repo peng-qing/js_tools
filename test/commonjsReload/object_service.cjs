@@ -1,10 +1,10 @@
 "use strict";
 
 module.exports = {
-    count: 2,
-    label: "object v2",
+    count: 3,
+    label: "object v3",
 
     show() {
-        return "object show v2 " + this.count;
+        return "object show v3 " + this.count;
     },
 };

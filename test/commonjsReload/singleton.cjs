@@ -2,7 +2,7 @@
 
 const { InjectSingleton } = require("../../src/common/singleton.js");
 
-const suffix = "v2";
+const suffix = "v3";
 
 class SingletonService {
     show() {

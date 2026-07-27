@@ -4,7 +4,10 @@ const http = require("node:http");
 const path = require("node:path");
 const { URL } = require("node:url");
 
-const { CommonJSModuleHotReloader } = require("../../src/common/module_hot_reloader.cjs");
+const {
+    CommonJSModuleHotReloader,
+    CommonJSModulePatchReloader,
+} = require("../../src/common/module_hot_reloader.cjs");
 
 const BasicService = require("./basic.cjs");
 const ChildService = require("./child.cjs");
@@ -13,6 +16,7 @@ const SingletonService = require("./singleton.cjs");
 const arrayExport = require("./array_export.cjs");
 
 const hotHandler = CommonJSModuleHotReloader.createHotReloadFunction(path.resolve(__dirname, "export_function.cjs"));
+const patchHotHandler = CommonJSModulePatchReloader.createHotReloadFunction(path.resolve(__dirname, "export_function.cjs"));
 
 const state = {
     basicInstance: new BasicService("Ada"),
@@ -26,7 +30,8 @@ const testGuide = {
         "1. call /process first and observe v1 output.",
         "2. edit the matching .cjs file in test/commonjsReload, for example change suffix from v1 to v2.",
         "3. call /reload?filePath=<file>.",
-        "4. call /process again and compare output plus identity fields.",
+        "4. or call /reload?mode=patch&filePath=<file> to test CommonJSModulePatchReloader.",
+        "5. call /process again and compare output plus identity fields.",
     ],
     expectations: {
         basic: [
@@ -45,7 +50,9 @@ const testGuide = {
         ],
         functionExport: [
             "directRequire shows what normal require currently returns.",
-            "hotWrapper must reflect edited code after reload.",
+            "hotWrapper reflects edited code after default cache reload.",
+            "patchWrapper must reflect edited code after reload?mode=patch.",
+            "After patch mode, directRequire may intentionally stay on the old cached function.",
         ],
         proxySingleton: [
             "proxyIdentityStable should stay true.",
@@ -62,26 +69,32 @@ const testGuide = {
         basic: [
             "curl \"http://localhost:3001/process?handlerName=callBasicService\"",
             "curl \"http://localhost:3001/reload?filePath=basic.cjs\"",
+            "curl \"http://localhost:3001/reload?mode=patch&filePath=basic.cjs\"",
         ],
         child: [
             "curl \"http://localhost:3001/process?handlerName=callChildService\"",
             "curl \"http://localhost:3001/reload?filePath=child.cjs\"",
+            "curl \"http://localhost:3001/reload?mode=patch&filePath=child.cjs\"",
         ],
         object: [
             "curl \"http://localhost:3001/process?handlerName=callObjectService\"",
             "curl \"http://localhost:3001/reload?filePath=object_service.cjs\"",
+            "curl \"http://localhost:3001/reload?mode=patch&filePath=object_service.cjs\"",
         ],
         functionExport: [
             "curl \"http://localhost:3001/process?handlerName=callExportFunction\"",
             "curl \"http://localhost:3001/reload?filePath=export_function.cjs\"",
+            "curl \"http://localhost:3001/reload?mode=patch&filePath=export_function.cjs\"",
         ],
         proxySingleton: [
             "curl \"http://localhost:3001/process?handlerName=callSingletonService\"",
             "curl \"http://localhost:3001/reload?filePath=singleton.cjs\"",
+            "curl \"http://localhost:3001/reload?mode=patch&filePath=singleton.cjs\"",
         ],
         arrayExport: [
             "curl \"http://localhost:3001/process?handlerName=callArrayExport\"",
             "curl \"http://localhost:3001/reload?filePath=array_export.cjs\"",
+            "curl \"http://localhost:3001/reload?mode=patch&filePath=array_export.cjs\"",
         ],
     },
 };
@@ -122,6 +135,7 @@ function callExportFunction() {
     return {
         directRequire: require("./export_function.cjs")("direct"),
         hotWrapper: hotHandler("wrapper"),
+        patchWrapper: patchHotHandler("patch-wrapper"),
     };
 }
 
@@ -171,9 +185,15 @@ const server = http.createServer((req, res) => {
     try {
         if (pathname === "/reload") {
             const filePath = resolveReloadPath(url.searchParams.get("filePath"));
-            CommonJSModuleHotReloader.reloadURL(filePath);
+            const mode = url.searchParams.get("mode") || "cache";
+            if (mode === "patch") {
+                CommonJSModulePatchReloader.reloadURL(filePath);
+            }
+            else {
+                CommonJSModuleHotReloader.reloadURL(filePath);
+            }
             res.writeHead(200, { "Content-Type": "application/json" });
-            res.end(JSON.stringify({ message: "reload complete", filePath }, null, 2));
+            res.end(JSON.stringify({ message: "reload complete", mode, filePath }, null, 2));
             return;
         }
 
@@ -229,30 +249,40 @@ process.on("SIGINT", () => {
 //    curl "http://localhost:3001/process?handlerName=callBasicService"
 //    Edit basic.cjs, change suffix v1 to v2.
 //    curl "http://localhost:3001/reload?filePath=basic.cjs"
+//    Or test patch mode:
+//    curl "http://localhost:3001/reload?mode=patch&filePath=basic.cjs"
 //    curl "http://localhost:3001/process?handlerName=callBasicService"
 //
 // 4. Inherited class export:
 //    curl "http://localhost:3001/process?handlerName=callChildService"
 //    Edit child.cjs, change suffix v1 to v2.
 //    curl "http://localhost:3001/reload?filePath=child.cjs"
+//    Or test patch mode:
+//    curl "http://localhost:3001/reload?mode=patch&filePath=child.cjs"
 //    curl "http://localhost:3001/process?handlerName=callChildService"
 //
 // 5. Plain object export:
 //    curl "http://localhost:3001/process?handlerName=callObjectService"
 //    Edit object_service.cjs, change label/show and optionally add added().
 //    curl "http://localhost:3001/reload?filePath=object_service.cjs"
+//    Or test patch mode:
+//    curl "http://localhost:3001/reload?mode=patch&filePath=object_service.cjs"
 //    curl "http://localhost:3001/process?handlerName=callObjectService"
 //
 // 6. Direct function export:
 //    curl "http://localhost:3001/process?handlerName=callExportFunction"
 //    Edit export_function.cjs, change v1 to v2.
 //    curl "http://localhost:3001/reload?filePath=export_function.cjs"
+//    Or test patch mode:
+//    curl "http://localhost:3001/reload?mode=patch&filePath=export_function.cjs"
 //    curl "http://localhost:3001/process?handlerName=callExportFunction"
 //
 // 7. Proxy singleton export:
 //    curl "http://localhost:3001/process?handlerName=callSingletonService"
 //    Edit singleton.cjs, change suffix v1 to v2.
 //    curl "http://localhost:3001/reload?filePath=singleton.cjs"
+//    Or test patch mode:
+//    curl "http://localhost:3001/reload?mode=patch&filePath=singleton.cjs"
 //    curl "http://localhost:3001/process?handlerName=callSingletonService"
 //    Expected after reload:
 //      proxyIdentityStable: true
@@ -264,4 +294,6 @@ process.on("SIGINT", () => {
 //    curl "http://localhost:3001/process?handlerName=callArrayExport"
 //    Edit array_export.cjs.
 //    curl "http://localhost:3001/reload?filePath=array_export.cjs"
+//    Or test patch mode:
+//    curl "http://localhost:3001/reload?mode=patch&filePath=array_export.cjs"
 //    curl "http://localhost:3001/process?handlerName=callArrayExport"

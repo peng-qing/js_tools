@@ -1,6 +1,6 @@
 "use strict";
 
-const suffix = "v2";
+const suffix = "v3";
 
 class BasicService {
     constructor(name) {

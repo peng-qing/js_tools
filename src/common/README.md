@@ -5,14 +5,16 @@
 | 模块 | 文件 | 说明 |
 |------|------|------|
 | ESMModuleHotReloader | `module_hot_reloader.mjs` | ESM 模块热重载器 |
-| CommonJSModuleHotReloader | `module_hot_reloader.cjs` | CommonJS 模块热重载器 |
+| CommonJSModuleHotReloader | `module_hot_reloader.cjs` | CommonJS 模块热重载器，使用 `delete require.cache` |
+| CommonJSModulePatchReloader | `module_hot_reloader.cjs` | CommonJS 模块热补丁加载器，使用临时 `Module` fresh load |
 | Singleton | `singleton.js` | 单例模式（继承式 + Proxy 式） |
 
 选择建议：
 
 - ESM 项目使用 `ESMModuleHotReloader`。
-- CommonJS 项目使用 `CommonJSModuleHotReloader`。
-- 直接导出函数时，两种热更器都需要通过 `createHotReloadFunction()` 创建稳定包装器，并在文件变更后调用对应 reload 方法刷新内部缓存。
+- CommonJS 项目默认使用 `CommonJSModuleHotReloader`。
+- 如果希望加载新模块时不写入 `require.cache`，可以使用 `CommonJSModulePatchReloader`，但它依赖 Node 私有 `Module` API，存在版本兼容性风险。
+- 直接导出函数时，热更器需要通过 `createHotReloadFunction()` 创建稳定包装器，并在文件变更后调用对应 reload 方法刷新内部缓存。
 - 热更适合修改方法逻辑，不适合修改对象身份、私有槽结构、复杂继承拓扑或内置对象行为。
 
 ---
@@ -345,7 +347,33 @@ module.exports = {
 
 **7. `CommonJSModulePatchReloader`**
 
-`module_hot_reloader.cjs` 当前导出了 `CommonJSModulePatchReloader`，但该类仍是占位实现；生产使用请使用 `CommonJSModuleHotReloader`。
+`CommonJSModulePatchReloader` 是另一种 CommonJS 热更实现。它不删除目标文件的 `require.cache`，而是创建一个临时 `Module` 实例加载新文件，拿到新 `exports` 后 patch 到旧引用上。
+
+```javascript
+const { CommonJSModulePatchReloader } = require("./src/common/module_hot_reloader.cjs");
+
+CommonJSModulePatchReloader.reloadURL("./my_service.cjs");
+```
+
+直接导出函数同样需要稳定包装器：
+
+```javascript
+const add = CommonJSModulePatchReloader.createHotReloadFunction("./math.cjs");
+
+add(1, 2);
+CommonJSModulePatchReloader.reloadURL("./math.cjs");
+add(1, 2);
+```
+
+明显兼容性问题：
+
+- 它依赖 Node 内部的 `module` 实现，包括 `new Module()`、`Module._nodeModulePaths()` 和 `module.load()`。这些不是稳定公开 API，Node 版本升级后可能出现行为变化。
+- fresh load 只针对当前目标模块。目标模块内部 `require()` 的子依赖仍按普通 CommonJS 规则读取 `require.cache`，不会自动 fresh load 整棵依赖树。
+- 目标模块应该已经被业务代码 `require()` 过。否则 `reloadURL()` 中的旧模块引用会在热更时才第一次创建，patch 的意义不大。
+- 它不会重写 `require.cache[modulePath].exports`，因为缓存中本来就保留旧导出引用；这也是它和 `CommonJSModuleHotReloader` 的主要区别。
+- 直接导出数组、Map、Set、Date、primitive 等值的限制仍然存在，原因和 `CommonJSModuleHotReloader` 相同。
+
+因此：默认建议使用 `CommonJSModuleHotReloader`；只有在明确希望避免新模块污染 `require.cache`，并且接受 Node 私有 API 兼容性风险时，再使用 `CommonJSModulePatchReloader`。
 
 ### 示例
 
@@ -370,6 +398,9 @@ curl "http://localhost:3001/process?handlerName=callBasicService"
 # 修改 test/commonjsReload/basic.cjs 后触发热更
 curl "http://localhost:3001/reload?filePath=basic.cjs"
 
+# 使用 CommonJSModulePatchReloader 测试同一文件
+curl "http://localhost:3001/reload?mode=patch&filePath=basic.cjs"
+
 # 再次调用，观察 hello/staticVersion 和 identity 字段
 curl "http://localhost:3001/process?handlerName=callBasicService"
 ```
@@ -379,6 +410,7 @@ Proxy 单例测试：
 ```bash
 curl "http://localhost:3001/process?handlerName=callSingletonService"
 curl "http://localhost:3001/reload?filePath=singleton.cjs"
+curl "http://localhost:3001/reload?mode=patch&filePath=singleton.cjs"
 curl "http://localhost:3001/process?handlerName=callSingletonService"
 ```
 
