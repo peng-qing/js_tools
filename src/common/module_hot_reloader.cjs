@@ -128,7 +128,7 @@ class CommonJSModuleHotReloader {
         // 3. 遍历所有模块引用 进行热更
         for (const requireCache of allRequiredCaches) {
             // module.export is plain function
-            if (typeUtils.isFunction(requireCache) && !typeUtils.isClass(requireCache)) {
+            if (CommonJSModuleHotReloader._isPlainFunction(requireCache)) {
                 // 直接导出的普通函数无法通过引用原地替换
                 // 通过 createHotReloadFunction 创建的包装器会读取 _plainFuncCaches 缓存
                 continue;
