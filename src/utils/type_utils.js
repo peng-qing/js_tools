@@ -40,7 +40,7 @@ class TypeUtils {
      * @returns {boolean}
      */
     static isBoolean(val) {
-        return typeof val_ === "boolean";
+        return typeof val === "boolean";
     }
 
     /**
@@ -49,7 +49,7 @@ class TypeUtils {
      * @returns {boolean}
      */
     static isFunction(val) {
-        return typeof val_ === "function";
+        return typeof val === "function";
     }
 
     /**
@@ -58,7 +58,7 @@ class TypeUtils {
      * @returns {boolean}
      */
     static isAsyncFunction(val) {
-        return Object.prototype.toString.call(val_) === "[object AsyncFunction]";
+        return Object.prototype.toString.call(val) === "[object AsyncFunction]";
     }
 
     /**

@@ -18,7 +18,7 @@ class CommonJSModuleHotReloader {
      * 代理对象原始类对象引用
      * 为了让通过代理的对象支持热更的特殊 symbol key 识别
      */
-    static ROW_PROXY_CLASS_KEY = Symbol("ROW_PROXY_CLASS_KEY");
+    static ROW_PROXY_CLASS_KEY = Symbol("raw_class");
 
     /** 跳过一些内置属性 */
     static _builtInProperties = [
@@ -58,6 +58,8 @@ class CommonJSModuleHotReloader {
         if (!stdFile.existsSync(absPath)) {
             throw new Error(`reload file ${absPath} not exists`);
         }
+        // 将老的模块添加到缓存记录
+        CommonJSModuleHotReloader._addOldModuleToCacahes(absPath);
         // 删除旧的模块缓存
         CommonJSModuleHotReloader._clearRequiredCaches(absPath);
         // 重新加载新的模块
@@ -190,6 +192,8 @@ class CommonJSModuleHotReloader {
         }
 
         // 2. 遍历所有属性 进行热更
+        // 暂时不采用 Reflect.ownKeys 因为 Symbol 属性的热更需要更谨慎
+        // 容易导致新的 Symbol 和 老的 Symbol 不是同一个，旧的还没删除新的又被添加到对象上造成状态分裂
         let allProperties = Object.getOwnPropertyNames(newClassCtor);
         for (const propertyName of allProperties) {
             // skip built-in properties
@@ -236,19 +240,18 @@ class CommonJSModuleHotReloader {
      * @param {string} absPath 绝对路径
      */
     static _clearRequiredCaches(absPath) {
-        const oldModule = require.cache[absPath];
+        // require.resolve 拿到真实 key 用于删除 require cache
+        // 避免 absPath 遇到省略扩展名、目录入口、软链接等 导致删除失败
+        const requirePath = require.resolve(absPath);
+        const oldModule = require.cache[requirePath];
         if (!oldModule) {
             return;
         }
 
-        // 1. 将老的模块添加到缓存记录
-        CommonJSModuleHotReloader._addOldModuleToCacahes(absPath);
-
-        // 2. 删除全局模块缓存
-        CommonJSModuleHotReloader._delGlobalModuleCaches(absPath);
-
-        // 3. 删除 require cache
-        delete require.cache[absPath];
+        // 删除全局模块缓存
+        CommonJSModuleHotReloader._delGlobalModuleCaches(requirePath);
+        // 删除 require cache
+        delete require.cache[requirePath];
     }
 
     /**
