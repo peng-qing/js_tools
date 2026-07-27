@@ -231,7 +231,7 @@ add(1, 2); // 调用热更后的函数
 | 删除方法 | ⚠️ | 旧方法可能残留 |
 | `instanceof` | ✅ | 依赖旧引用回写保持稳定 |
 | Symbol 属性 | ⚠️ | 当前暂不热更，避免本地 Symbol 造成状态分裂 |
-| 数组 / Date / Map / Set 等内置对象实例 | ⚠️ | 当前可能被 fallback 当作普通对象处理，不建议作为热更导出边界 |
+| 数组 / Map / Set / Date 等内置对象实例 | ❌ | 不应作为直接热更导出边界；详见“内置对象导出边界” |
 | primitive 值导出 | ❌ | 例如 number/string/boolean/null/undefined，无法原地 patch |
 
 ### Proxy 单例
@@ -291,9 +291,47 @@ first.show();                    // 新版本方法
 
 **5. 内置对象导出边界**
 
-数组、Date、Map、Set 等内置对象实例不适合作为热更导出边界。它们的行为主要来自内置 prototype，不应该被热更器递归 patch。更稳妥的设计是只支持 class、class instance、plain object、Proxy class 和 direct function wrapper。
+数组、Map、Set、Date 等内置对象实例不适合作为直接热更导出边界。它们不是稳定的业务行为容器，通用属性 patch 无法可靠表达它们的真实状态变化。
 
-当前实现的 fallback 仍会把部分对象按属性处理，因此数组导出可能出现元素被覆盖的现象。这属于实现边界，不建议依赖；后续应在进入 fallback 前限制为 plain object。
+原因有两类：
+
+- 数组虽然有索引 own property，但 `length` 被内置属性过滤跳过。新数组变长时 `length` 可能因写入索引自动增加；新数组变短时旧数组尾部元素会残留，`length` 不会自动缩短。
+- `Map`、`Set`、`Date` 的核心数据在 JS 内部槽中，不是普通 own property。`Object.getOwnPropertyNames(new Map())` 通常拿不到 entry，`Object.getOwnPropertyNames(new Date())` 也拿不到时间值。
+
+因此这些直接导出不会得到可靠热更：
+
+```javascript
+module.exports = [1, 2, 3];                 // 不建议
+module.exports = new Map([["a", 1]]);       // 不支持 entry 热更
+module.exports = new Set([1, 2, 3]);        // 不支持元素热更
+module.exports = new Date("2024-01-01");    // 不支持时间值热更
+```
+
+当前实现的 fallback 仍可能把部分对象按属性处理，因此直接导出这些对象会有以下风险：
+
+- 数组可能出现“部分元素被覆盖但长度不正确”，例如新数组变短后旧尾部元素残留。
+- `Map` / `Set` / `Date` 通常不会同步核心数据，热更后看起来成功，但内容仍是旧状态。
+- 原型链递归可能触碰内置 prototype，带来全局行为污染风险。
+
+这些行为都不应作为可依赖的热更语义。
+
+替代方式是：把内置对象作为模块内部运行时状态，导出 plain object 或 class 方法作为访问边界。
+
+```javascript
+const routes = new Map();
+
+module.exports = {
+    getRoute(key) {
+        return routes.get(key);
+    },
+
+    setRoute(key, value) {
+        routes.set(key, value);
+    },
+};
+```
+
+这样热更器只 patch `getRoute` / `setRoute` 等方法，`routes` 作为运行时状态继续保留，不会被误当成模块导出本身去合并。
 
 **6. 静默失败**
 

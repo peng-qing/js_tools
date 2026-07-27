@@ -143,6 +143,7 @@ function callArrayExport() {
         arrayIdentityStable: latestArrayExport === arrayExport,
         initialArray: arrayExport,
         latestArray: latestArrayExport,
+        arrayLength: ["old: " + arrayExport.length, "new: " + latestArrayExport.length],
     };
 }
 
