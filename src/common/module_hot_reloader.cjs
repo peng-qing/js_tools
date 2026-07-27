@@ -379,7 +379,30 @@ class CommonJSModulePatchReloader {
         CommonJSModulePatchReloader._patchModule(modulePath, oldModule, newModule);
     }
 
+    /**
+     * 创建热更函数包装器
+     * @param {string} fileUrl 文件路径
+     * @returns {Function}
+     */
     static createHotReloadFunction(fileUrl) {
+        const modulePath = CommonJSModulePatchReloader._resolveModulePath(fileUrl);
+        // 缓存不存在
+        if (!CommonJSModulePatchReloader._plainFuncCaches.has(modulePath)) {
+            const exported = require(modulePath);
+            if (!CommonJSModulePatchReloader._isPlainFunction(exported)) {
+                throw new Error(`create hot reload function but file ${modulePath} not export a plain function`);
+            }
+            // 缓存导出的普通函数
+            CommonJSModulePatchReloader._plainFuncCaches.set(modulePath, exported);
+        }
+
+        return function (...args) {
+            const latestFunc = CommonJSModulePatchReloader._plainFuncCaches.get(modulePath);
+            if (!latestFunc || !typeUtils.isFunction(latestFunc)) {
+                throw new Error(`create hot reload function but file ${modulePath} not export a plain function`);
+            }
+            return latestFunc.apply(this, args);
+        }
     }
 
     /**
