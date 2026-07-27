@@ -1,0 +1,14 @@
+{
+    "name": "commonjs-reload-test",
+    "version": "1.0.0",
+    "description": "CommonJS hot reload manual HTTP test server",
+    "main": "index.cjs",
+    "scripts": {
+        "start": "node index.cjs",
+        "test": "node index.cjs"
+    },
+    "keywords": [],
+    "author": "pengqq",
+    "license": "MIT",
+    "type": "commonjs"
+}

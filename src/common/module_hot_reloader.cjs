@@ -225,7 +225,7 @@ class CommonJSModuleHotReloader {
             }
             // 对于数据项 需要使用老的替换新的 避免丢失运行时状态
             try {
-                if (oldClassCtor[propertyName]) {
+                if (Object.hasOwn(oldClassCtor, propertyName)) {
                     // 默认使用老的替代新的
                     newClassCtor[propertyName] = oldClassCtor[propertyName];
                 }
