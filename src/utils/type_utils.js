@@ -25,6 +25,10 @@ class TypeUtils {
         return Number.isInteger(val);
     }
 
+    static isSafeInteger(val) {
+        return Number.isSafeInteger(val);
+    }
+
     /**
      * 判断是否是一个字符串
      * @param {any} val 
