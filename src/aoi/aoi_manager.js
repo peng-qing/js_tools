@@ -281,7 +281,7 @@ class AoiManager {
             }
             // 排除距离之外 (距离已经排查过了不再排查)
             if (interestEntity.hasInterestState(candidateEntityId, INTEREST_STATE.DISTANCE) ||
-                interestEntity.policy.matchesDistance(ownerEntity, targetEntity)) {
+                !interestEntity.policy.matchesDistance(ownerEntity, targetEntity)) {
                 continue;
             }
             // 检查容量
