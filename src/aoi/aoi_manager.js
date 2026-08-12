@@ -555,7 +555,7 @@ class AoiManager {
             const allInterestEntities = Array.from(this._interestEntities.values());
             for (const interestEntity of allInterestEntities) {
                 if (interestEntity.active) {
-                    this._refreshDistanceInterest(interestEntity.interestId);
+                    this._refreshDistanceInterest(interestEntity);
                 }
             }
             batches = this._snapshotEventsAndClear();
