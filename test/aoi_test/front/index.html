@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>src/aoi 实时测试台</title>
+    <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+    <header class="topbar">
+        <div>
+            <p class="eyebrow">SRC/AOI TEST LAB</p>
+            <h1>AOI 实时行为测试台</h1>
+            <p class="subtitle">拖动实体并修改 Policy，结果由 <code>src/aoi</code> 在服务端实时计算。</p>
+        </div>
+        <output id="connection-status" class="status" data-state="loading">正在连接</output>
+    </header>
+
+    <main class="layout">
+        <section class="map-panel" aria-labelledby="map-heading">
+            <div class="panel-heading">
+                <div>
+                    <h2 id="map-heading">XZ 空间</h2>
+                    <p>实线范围是 Shape 查询边界；拖动任意圆点更新位置。</p>
+                </div>
+                <div class="actions">
+                    <button id="add-target" type="button">添加目标</button>
+                    <button id="reset" type="button" class="secondary">重置</button>
+                </div>
+            </div>
+            <div class="map-stage">
+                <svg id="world-map" viewBox="-100 -100 200 200" role="img"
+                    aria-labelledby="map-title map-description">
+                    <title id="map-title">观察者局部 AOI 视图</title>
+                    <desc id="map-description">以观察者为中心，显示当前 Shape 最大半尺寸三倍范围内的实体。</desc>
+                    <defs>
+                        <pattern id="small-grid" width="10" height="10" patternUnits="userSpaceOnUse">
+                            <path d="M 10 0 L 0 0 0 10" class="grid minor"></path>
+                        </pattern>
+                        <pattern id="large-grid" width="50" height="50" patternUnits="userSpaceOnUse">
+                            <rect width="50" height="50" fill="url(#small-grid)"></rect>
+                            <path d="M 50 0 L 0 0 0 50" class="grid major"></path>
+                        </pattern>
+                    </defs>
+                    <rect id="map-background" x="-100" y="-100" width="200" height="200" class="map-background"></rect>
+                    <rect id="map-grid" x="-100" y="-100" width="200" height="200" fill="url(#large-grid)"></rect>
+                    <line id="x-axis" x1="-100" y1="0" x2="100" y2="0" class="axis"></line>
+                    <line id="z-axis" x1="0" y1="-100" x2="0" y2="100" class="axis"></line>
+                    <g id="shape-layer" aria-hidden="true"></g>
+                    <g id="entity-layer"></g>
+                </svg>
+                <section class="overview" aria-labelledby="overview-title">
+                    <div class="overview-heading">
+                        <h3 id="overview-title">全局缩略图</h3>
+                        <span>橙色框表示主摄像机当前覆盖区域</span>
+                    </div>
+                    <svg id="overview-map" viewBox="-100 -100 200 200" role="img"
+                        aria-label="整张地图、全部实体和主摄像机范围">
+                        <rect id="overview-background" x="-100" y="-100" width="200" height="200" class="overview-background"></rect>
+                        <line id="overview-x-axis" x1="-100" y1="0" x2="100" y2="0" class="overview-axis"></line>
+                        <line id="overview-z-axis" x1="0" y1="-100" x2="0" y2="100" class="overview-axis"></line>
+                        <rect id="camera-viewport" x="-100" y="-100" width="200" height="200" class="camera-viewport"></rect>
+                        <g id="overview-entity-layer"></g>
+                    </svg>
+                </section>
+                <div class="legend" aria-label="地图颜色与线型说明">
+                    <strong class="legend-title">颜色与线型说明</strong>
+                    <span class="legend-item">
+                        <i class="dot observer" aria-hidden="true"></i>
+                        <b>蓝色实体</b>：观察者
+                    </span>
+                    <span class="legend-item">
+                        <i class="dot interested" aria-hidden="true"></i>
+                        <b>绿色实体</b>：已进入 Manager interest
+                    </span>
+                    <span class="legend-item">
+                        <i class="dot matched" aria-hidden="true"></i>
+                        <b>黄色实体</b>：Policy 命中，但 Manager 尚未关注
+                    </span>
+                    <span class="legend-item">
+                        <i class="dot outside" aria-hidden="true"></i>
+                        <b>灰色实体</b>：Policy 未命中
+                    </span>
+                    <span class="legend-item">
+                        <i class="line-sample vision-line" aria-hidden="true"></i>
+                        <b>蓝色范围</b>：当前 Shape 轮廓
+                    </span>
+                    <span class="legend-item">
+                        <i class="line-sample bounds-line" aria-hidden="true"></i>
+                        <b>黄色虚线</b>：Backend 查询包围盒
+                    </span>
+                    <span class="legend-item">
+                        <i class="line-sample camera-line" aria-hidden="true"></i>
+                        <b>橙色框</b>：主摄像机范围
+                    </span>
+                    <span class="coordinates">坐标方向：X →　Z ↓</span>
+                </div>
+            </div>
+        </section>
+
+        <aside class="inspector" aria-label="参数和实时结果">
+            <section class="summary" aria-label="实时摘要">
+                <div><span>Interest</span><strong id="interest-count">0</strong></div>
+                <div><span>Policy 命中</span><strong id="policy-count">0</strong></div>
+                <div><span>Shape 命中</span><strong id="shape-count">0</strong></div>
+            </section>
+
+            <section class="section">
+                <h2>Policy 与 Backend</h2>
+                <div class="fields three">
+                    <label><span>形状</span><select id="shape">
+                        <option value="circle">圆形 CycleXZ</option>
+                        <option value="rectangle">矩形 RectangleXZ</option>
+                        <option value="fan">扇形 FanXZ</option>
+                        <option value="cylinder">圆柱 Cylinder</option>
+                        <option value="cuboid">长方体 Cuboid</option>
+                    </select></label>
+                    <label><span>最大关注数</span><input id="max-interest" type="number" min="0" step="1"></label>
+                    <label>
+                        <span>地图 X/Z 半尺寸</span>
+                        <input id="map-extent" type="number" min="10" max="100000" step="10">
+                    </label>
+                </div>
+                <div id="radius-fields" class="fields two">
+                    <label><span>半径</span><input id="radius" type="number" min="0" step="1"></label>
+                    <label id="half-height-field"><span>Y 半高</span><input id="half-y" type="number" min="0" step="1"></label>
+                </div>
+                <div id="extent-fields" class="fields three" hidden>
+                    <label><span>X 半尺寸</span><input id="half-x" type="number" min="0" step="1"></label>
+                    <label><span>Y 半尺寸</span><input id="extent-half-y" type="number" min="0" step="1"></label>
+                    <label><span>Z 半尺寸</span><input id="half-z" type="number" min="0" step="1"></label>
+                </div>
+                <div id="fan-fields" class="fields two" hidden>
+                    <label><span>Yaw（度）</span><input id="yaw" type="number" step="1"></label>
+                    <label><span>半角（度）</span><input id="half-angle" type="number" min="0" max="180" step="1"></label>
+                </div>
+                <label class="check"><input id="height-enabled" type="checkbox">启用 Policy 相对高度过滤</label>
+                <div id="height-fields" class="fields two" hidden>
+                    <label><span>最低高度差</span><input id="min-height" type="number" step="1"></label>
+                    <label><span>最高高度差</span><input id="max-height" type="number" step="1"></label>
+                </div>
+                <details>
+                    <summary>Flags 与 Backend 参数</summary>
+                    <div class="fields three">
+                        <label><span>Any</span><input id="any-flags" type="number" min="0" step="1"></label>
+                        <label><span>Need</span><input id="need-flags" type="number" min="0" step="1"></label>
+                        <label><span>Forbid</span><input id="forbid-flags" type="number" min="0" step="1"></label>
+                    </div>
+                    <div class="fields two">
+                        <label><span>Backend</span><select id="backend">
+                            <option value="grid">GridBackend</option>
+                            <option value="brute">BruteBackend</option>
+                        </select></label>
+                        <label><span>Grid Size</span><input id="grid-size" type="number" min="1" step="1"></label>
+                    </div>
+                </details>
+            </section>
+
+            <section class="section">
+                <div class="section-heading">
+                    <h2>选中实体</h2>
+                    <button id="remove-target" type="button" class="danger" hidden>删除目标</button>
+                </div>
+                <strong id="selected-guid" class="selected-guid">observer</strong>
+                <div class="fields three">
+                    <label><span>X</span><input id="entity-x" type="number" min="-100" max="100" step="0.1"></label>
+                    <label><span>Y</span><input id="entity-y" type="number" step="0.1"></label>
+                    <label><span>Z</span><input id="entity-z" type="number" min="-100" max="100" step="0.1"></label>
+                </div>
+                <label><span>Flags（uint32）</span><input id="entity-flags" type="number" min="0" max="4294967295" step="1"></label>
+            </section>
+
+            <section class="section results">
+                <h2>真实执行结果</h2>
+                <div id="request-error" class="message error" hidden></div>
+                <div id="diagnostics" class="message warning" hidden></div>
+                <p id="transition" class="transition">等待首次计算</p>
+                <div class="result-group">
+                    <h3>Manager interest</h3>
+                    <p id="interest-list" class="result-list">无</p>
+                </div>
+                <div class="result-group">
+                    <h3>Policy 直接匹配</h3>
+                    <p id="policy-list" class="result-list">无</p>
+                </div>
+                <div class="result-group">
+                    <h3>Shape 即时查询</h3>
+                    <p id="shape-list" class="result-list">无</p>
+                </div>
+            </section>
+        </aside>
+    </main>
+    <script src="./app.js"></script>
+</body>
+</html>
