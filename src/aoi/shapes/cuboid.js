@@ -24,7 +24,7 @@ class Cuboid extends Shape {
      * @param {import("../geometry/position.js")} center 中心点
      * @returns {BoundsXZ} 查询XZ包围盒
      */
-    getQueryBoundsXZ() {
+    getQueryBoundsXZ(center) {
         // 根据中心点和半径计算包围盒
         return new BoundsXZ(
             center.x - this.halfExtent3D.x,

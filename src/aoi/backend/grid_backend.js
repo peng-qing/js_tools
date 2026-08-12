@@ -2,6 +2,7 @@
 
 const Position = require("../geometry/position.js");
 const validationUtils = require("../validation.js");
+const { AoiCapacityError } = require("../errors.js");
 const AbstractBackend = require("./abstract_backend.js");
 
 /**

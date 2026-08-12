@@ -522,7 +522,7 @@ class AoiManager {
         }
 
         this._applyInterestState(interestEntity, targetEntity, INTEREST_STATE.FORCE, false);
-        return false;
+        return true;
     }
 
     /**
@@ -648,7 +648,7 @@ class AoiManager {
      * @param {Set<number>} excludeEntityIds 排除的实体Id列表
      * @returns {Array<string|number>} 符合条件的实体guid列表
      */
-    querySequare(center, halfSize, excludeEntityIds = new Set()) {
+    querySquare(center, halfSize, excludeEntityIds = new Set()) {
         return this.queryRectangle(center, new HalfExtentXZ(halfSize, halfSize), excludeEntityIds);
     }
 
@@ -684,7 +684,7 @@ class AoiManager {
      * @param {Set<number>} excludeEntityIds 排除的实体Id列表
      * @returns {Array<string|number>} 符合条件的实体guid列表
      */
-    queryCude(center, halfSize, excludeEntityIds = new Set()) {
+    queryCube(center, halfSize, excludeEntityIds = new Set()) {
         return this.queryCuboid(center, new HalfExtent3D(halfSize, halfSize, halfSize), excludeEntityIds);
     }
 

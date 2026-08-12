@@ -45,5 +45,6 @@ class AoiCapacityError extends AoiError {
 module.exports = {
     AoiError,
     AoiValidationError,
-    AoiStateError
+    AoiStateError,
+    AoiCapacityError
 };

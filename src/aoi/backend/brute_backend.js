@@ -37,6 +37,7 @@ class BruteBackend extends AbstractBackend {
         void entityId;
         void prevPos;
         void pos;
+        return true;
     }
 
     /**
