@@ -31,6 +31,17 @@ class AoiStateError extends AoiError {
     }
 }
 
+/**
+ * Aoi 容量错误
+ * 表示AOI管理器容量超出限制
+ * 比如：网格数量超出限制
+ */
+class AoiCapacityError extends AoiError {
+    constructor(message, code = "AOI_CAPACITY_ERROR") {
+        super(message, code);
+    }
+}
+
 module.exports = {
     AoiError,
     AoiValidationError,
