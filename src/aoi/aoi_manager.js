@@ -498,7 +498,7 @@ class AoiManager {
         }
         // 如果目标实体已经处于强制观察状态 或者 策略匹配无法满足强制观察条件
         if (interestEntity.hasInterestState(targetEntity.entityId, INTEREST_STATE.FORCE) ||
-            interestEntity.policy.matchesForced(ownerEntity, targetEntity)) {
+            !interestEntity.policy.matchesForced(ownerEntity, targetEntity)) {
             return false;
         }
         // 添加到观察区域

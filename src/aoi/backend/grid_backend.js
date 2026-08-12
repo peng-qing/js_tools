@@ -114,7 +114,7 @@ class GridBackend extends AbstractBackend {
         if (cell) {
             cell.delete(entityId);
         }
-        if (cell.size === 0) {
+        if (cell && cell.size <= 0) {
             this.cellMap.delete(posKey);
         }
     }
