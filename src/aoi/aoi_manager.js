@@ -535,7 +535,15 @@ class AoiManager {
         if (!interestEntity) {
             return [];
         }
-        return Array.from(interestEntity.interests.values()).map(targetEntity => targetEntity.guid);
+        const allEntityIds = Array.from(interestEntity.interests.keys());
+        const allGuids = [];
+        for (const entityId of allEntityIds) {
+            const targetEntity = this._entities.get(entityId);
+            if (targetEntity) {
+                allGuids.push(targetEntity.guid);
+            }
+        }
+        return allGuids;
     }
 
     /**

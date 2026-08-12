@@ -64,7 +64,7 @@ class SpatialInterestPolicy extends InterestPolicy {
             // 形状包含
             this.shape.contains(observer.pos, target.pos) &&
             // 高度范围包含
-            this.heightRange.contains(target.pos) &&
+            this.heightRange.contains(observer.pos, target.pos) &&
             // 标志过滤器匹配
             this.flagFilter.matches(target.flags)
         )

@@ -30,7 +30,9 @@ class InterestEntity {
         this.policy = policy;
         /**
          * 当前正在关注哪些目标
-         * @type {Map<number, import("./position_entity.js")>}
+         * key: 目标实体Id
+         * value: 兴趣状态
+         * @type {Map<number, number>}
          */
         this.interests = new Map();
         /**
@@ -79,6 +81,14 @@ class InterestEntity {
     setInterestState(targetEntityId, targetState, enabled) {
         const prevState = this.getInterestState(targetEntityId);
         const nextState = enabled ? prevState | targetState : prevState & ~targetState;
+
+        if (nextState === INTEREST_STATE.NONE) {
+            this.interests.delete(targetEntityId);
+        }
+        else {
+            this.interests.set(targetEntityId, nextState);
+        }
+
         const event = this.resolveInterestEvent(prevState, nextState);
 
         return { prevState, nextState, event };
