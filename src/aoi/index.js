@@ -12,6 +12,7 @@ const AoiManager = require("./aoi_manager.js");
 const AbstractBackend = require("./backend/abstract_backend.js");
 const BruteBackend = require("./backend/brute_backend.js");
 const GridBackend = require("./backend/grid_backend.js");
+const CrossLinkedListBackend = require("./backend/cross_linked_list_backend.js");
 
 const PositionEntity = require("./entity/position_entity.js");
 const InterestEntity = require("./entity/interest_entity.js");
@@ -53,6 +54,7 @@ module.exports = Object.freeze({
     AbstractBackend,
     BruteBackend,
     GridBackend,
+    CrossLinkedListBackend,
 
     // AOI 内部实体模型；主要供扩展 Policy 和调试使用
     PositionEntity,

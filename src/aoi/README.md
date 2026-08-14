@@ -54,7 +54,10 @@ src/aoi/
 ├── backend/
 │   ├── abstract_backend.js           空间后端抽象接口
 │   ├── brute_backend.js              全量遍历候选后端
-│   └── grid_backend.js               XZ 均匀网格候选后端
+│   ├── grid_backend.js               XZ 均匀网格候选后端
+│   ├── cross_linked_list_backend.js  X/Z 十字链表候选后端
+│   └── structures/
+│       └── cross_linked_list.js      十字链表节点、轴链表与范围游标
 ├── entity/
 │   ├── position_entity.js            AOI 中的位置实体
 │   └── interest_entity.js            一个独立观察范围及其关系状态
@@ -333,6 +336,21 @@ clear()
 
 它的查询复杂度随实体总数线性增长，不适合大规模生产场景。由于它不维护位置索引，实体移动时不需要调整内部数据，但 `moveEntity()` 仍会返回 `true`，以满足 Backend 的统一调用约定。
 
+### 6.4 `CrossLinkedListBackend`
+
+`CrossLinkedListBackend` 为每个实体创建一个共享节点，并将节点同时挂入按 X
+坐标和 Z 坐标排序的两条双向链表：
+
+- 添加、删除和移动实体时同步维护两条轴向链表；
+- 查询时估算 Bounds 在 X、Z 数据跨度中的覆盖比例；
+- 选择预计扫描比例较小的轴执行闭区间扫描；
+- 扫描过程中使用另一轴坐标完成 Bounds 候选过滤；
+- 不依赖固定世界边界，也不需要 `gridSize`。
+
+它适合用来测试连续坐标索引和中小规模动态场景。链表的起点定位、插入以及
+远距离移动最坏需要线性扫描，因此不能仅凭结构名称假设它一定优于网格；应
+结合实体分布、移动幅度和查询范围进行基准测试。
+
 ## 7. 一次 `update()` 如何工作
 
 ```mermaid
@@ -575,8 +593,6 @@ const nearbyGuids = manager.queryCircle(
 - 毫秒计时器或自动更新循环，调用频率由业务层控制。
 
 ## 12. 使用注意事项与设计边界
-
-本节描述的是当前接口契约和使用限制，不代表代码缺陷。已经修复的历史问题不在这里保留。
 
 ### 12.1 默认 `FlagFilter` 不匹配目标
 

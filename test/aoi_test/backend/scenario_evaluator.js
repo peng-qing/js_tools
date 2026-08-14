@@ -37,9 +37,22 @@ function createShape(policy) {
 }
 
 function createBackend(scenario) {
-    return scenario.backend === "grid"
-        ? new aoi.GridBackend(scenario.gridSize, MAX_CELLS_PER_QUERY)
-        : new aoi.BruteBackend();
+    switch (scenario.backend) {
+        case "grid":
+            return new aoi.GridBackend(
+                scenario.gridSize,
+                MAX_CELLS_PER_QUERY
+            );
+        case "cross-linked-list":
+            // 十字链表不划分固定网格，因此不使用 gridSize。
+            return new aoi.CrossLinkedListBackend();
+        case "brute":
+            return new aoi.BruteBackend();
+        default:
+            // normalizeScenario 已完成白名单校验；这里保留防御分支，避免
+            // 未来扩展校验器后静默回退到错误的 Backend。
+            throw new TypeError(`不支持的 Backend: ${scenario.backend}`);
+    }
 }
 
 function errorMessage(error) {

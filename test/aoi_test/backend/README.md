@@ -18,6 +18,17 @@ POST /api/evaluate
 产生可重复结果，也避免浏览器取消请求后在服务器遗留一半更新的 Manager。
 此页面测试的是单次 AOI 计算，不用于压力测试长生命周期对象。
 
+服务端接受以下 Backend 标识：
+
+| 请求值 | 实际实例 | 专用参数 |
+|---|---|---|
+| `grid` | `GridBackend` | `gridSize`、服务端查询网格上限 |
+| `cross-linked-list` | `CrossLinkedListBackend` | 无 |
+| `brute` | `BruteBackend` | 无 |
+
+Backend 通过明确的 `switch` 创建，不对未知值进行默认回退。这样新增页面选项
+但遗漏服务端接入时会立即暴露错误，而不会静默使用 `BruteBackend`。
+
 ## 安全和边界
 
 - 服务只监听 `127.0.0.1`；

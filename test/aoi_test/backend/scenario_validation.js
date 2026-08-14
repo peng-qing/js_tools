@@ -2,6 +2,7 @@
 
 const MAX_TARGETS = 500;
 const GUID_PATTERN = /^[A-Za-z0-9_-]{1,64}$/;
+const SUPPORTED_BACKENDS = new Set(["brute", "grid", "cross-linked-list"]);
 
 function assertObject(value, name) {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
@@ -95,8 +96,10 @@ function normalizeScenario(input) {
         throw new TypeError(`targets 必须是数组且最多包含 ${MAX_TARGETS} 项`);
     }
 
-    if (input.backend !== "brute" && input.backend !== "grid") {
-        throw new TypeError("backend 必须是 brute 或 grid");
+    if (!SUPPORTED_BACKENDS.has(input.backend)) {
+        throw new TypeError(
+            "backend 必须是 brute、grid 或 cross-linked-list"
+        );
     }
 
     const observer = entity(input.observer, "observer");

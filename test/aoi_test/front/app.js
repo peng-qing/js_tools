@@ -226,6 +226,8 @@
         controls.extentHalfY.parentElement.hidden = shape !== "cuboid";
         controls.fanFields.hidden = shape !== "fan";
         controls.heightFields.hidden = !state.policy.heightEnabled;
+        // 只有均匀网格需要网格尺寸。BruteBackend 和十字链表 Backend
+        // 都不读取该参数，禁用输入可以明确表达当前选择的配置边界。
         controls.gridSize.disabled = state.backend !== "grid";
     }
 

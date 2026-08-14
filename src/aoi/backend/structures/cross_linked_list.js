@@ -211,7 +211,10 @@ class SortedAxisLinkedList {
         while (node && this.coordinate(node) > max) {
             node = this.prev(node);
         }
-        return new AxisRangeCursor(this, node, max, false);
+        // 反向扫描从不大于 max 的节点开始，直到坐标小于 min 时结束。
+        // AxisRangeCursor 在反向模式下使用 coordinate < boundary 判断越界，
+        // 因此这里必须传入区间下界 min，而不是用于定位起点的 max。
+        return new AxisRangeCursor(this, node, min, false);
     }
 
     /**

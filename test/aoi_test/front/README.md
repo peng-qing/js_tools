@@ -16,6 +16,19 @@ scenario
 由服务端使用 `src/aoi` 创建真实对象。这样测试页面不会产生一套与被测代码
 不同的判断逻辑。
 
+## Backend 切换
+
+页面支持在同一场景输入下切换三种真实 Backend：
+
+- `GridBackend`：XZ 均匀网格索引，需要配置 `gridSize`；
+- `CrossLinkedListBackend`：分别维护按 X、Z 排序的十字链表，不使用
+  `gridSize`；
+- `BruteBackend`：直接返回全部实体作为候选，用于小规模正确性对照。
+
+选择 Backend 后，前端会把对应标识随完整场景发送给服务端并重新计算。
+只有选择 `GridBackend` 时 Grid Size 输入框才可编辑，其他 Backend 下该参数
+保留在场景对象中但不会参与实例化。
+
 ## 坐标转换与拖拽
 
 主地图是跟随观察者的局部摄像机。摄像机使用当前 Shape 的 X/Z 最大半尺寸
